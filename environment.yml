@@ -1,0 +1,13 @@
+name: lhorizon
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - jupyter
+  - python=3.9
+  - pandas
+  - numpy
+  - requests
+  - astropy
+  - more-itertools
+prefix: /home/michael/anaconda3/envs/lhorizon
