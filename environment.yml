@@ -10,4 +10,3 @@ dependencies:
   - requests
   - astropy
   - more-itertools
-prefix: /home/michael/anaconda3/envs/lhorizon
