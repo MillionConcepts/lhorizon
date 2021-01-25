@@ -1,9 +1,11 @@
 """
 This module implements a class for querying the
-`JPL Horizons <https://ssd.jpl.nasa.gov/horizons.cgi>`service.
+`JPL Horizons <https://ssd.jpl.nasa.gov/horizons.cgi>`service,
+along with associated helper functions.
 
 It is rewritten from astroquery.JPLHorizons. it contains fixes and added
-functionality related to queries about the Moon.
+functionality related to queries about targets and observers in arbitrary
+frames, as well as helpers for bulk downloads.
 """
 
 # get all Horizons columns by default
