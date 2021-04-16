@@ -31,12 +31,12 @@ from astropy.time import Time
 from more_itertools import chunked
 from utils import snorm, listify
 
-EPH_QUANTITIES = 'A'
+EPH_QUANTITIES = "A"
 
 # timeout for connecting to jpl server
 TIMEOUT = 30
 
-HORIZONS_SERVER = 'https://ssd.jpl.nasa.gov/horizons_batch.cgi'
+HORIZONS_SERVER = "https://ssd.jpl.nasa.gov/horizons_batch.cgi"
 
 
 def hunt_csv(regex, body):
@@ -73,23 +73,27 @@ def format_horizon(horizon_frame):
         "az": horizon_frame["Azi_(a-app)"].astype(np.float64),
         "alt": horizon_frame["Elev_(a-app)"].astype(np.float64),
         "dist": pd.Series(
-            [au_to_m * delta for delta in
-             horizon_frame["delta"].astype(np.float64)]
+            [
+                au_to_m * delta
+                for delta in horizon_frame["delta"].astype(np.float64)
+            ]
         ),
-        'sub_lon': horizon_frame['ObsSub-LON'].astype(np.float64),
-        'sub_lat': horizon_frame['ObsSub-LAT'].astype(np.float64),
+        "sub_lon": horizon_frame["ObsSub-LON"].astype(np.float64),
+        "sub_lat": horizon_frame["ObsSub-LAT"].astype(np.float64),
         # convert from arcseconds to degree
-        'ang_diam': horizon_frame['Ang-diam'].astype(np.float64) / 3600,
+        "ang_diam": horizon_frame["Ang-diam"].astype(np.float64) / 3600,
     }
     # only present for lunar ephemerides with selenographic coords specified
     if "T-O-M" in horizon_frame.columns:
         horizon_columns["t_o_m_angle"] = horizon_frame["T-O-M"].astype(
-            np.float64)
+            np.float64
+        )
     # only present for ephemerides with planetographic coords specified
     if "geo_lat" in horizon_frame.columns:
         for p_coord in ["geo_lat", "geo_lon", "geo_el"]:
             horizon_columns[p_coord] = horizon_frame[p_coord].astype(
-                np.float64)
+                np.float64
+            )
     return pd.DataFrame(horizon_columns)
 
 
@@ -116,18 +120,19 @@ def make_horizon_dataframe(raw_horizon_response, get_target_location=False):
     horizon_dataframe = pd.read_csv(data_buffer, sep=" *, *", engine="python")
     horizon_dataframe.rename(
         mapper={
-            'Unnamed: 2': 'solar_presence',
-            'Unnamed: 3': 'lunar_presence',
-            'Unnamed: 4': 'nearside_flag',
-            'Unnamed: 5': 'illumination_flag'
+            "Unnamed: 2": "solar_presence",
+            "Unnamed: 3": "lunar_presence",
+            "Unnamed: 4": "nearside_flag",
+            "Unnamed: 5": "illumination_flag",
         },
         axis=1,
-        inplace=True
+        inplace=True,
     )
     # add the target's geodetic coordinates if desired
     if get_target_location:
         horizon_target_search = re.compile(
-            r"(?<=Target geodetic : )\d.*(?= {)")
+            r"(?<=Target geodetic : )\d.*(?= {)"
+        )
         target_geodetic_coords = hunt_csv(
             horizon_target_search, raw_horizon_response
         )
@@ -149,12 +154,13 @@ class LHorizons:
     """
 
     def __init__(
-            self,
-            target_id=None,
-            location=None,
-            epochs=None,
-            id_type='majorbody',
-            session=None,
+        self,
+        target_id=None,
+        location=None,
+        epochs=None,
+        id_type="majorbody",
+        session=None,
+        query_type="OBSERVER",
     ):
         """
         Instantiate JPL query.
@@ -195,15 +201,17 @@ class LHorizons:
         self.location = location
         if epochs is not None:
             if isinstance(epochs, Mapping):
-                if not ('start' in epochs and
-                        'stop' in epochs and
-                        'step' in epochs):
-                    raise ValueError('time range ({:s}) requires start, stop, '
-                                     'and step'.format(str(epochs)))
+                if not (
+                    "start" in epochs and "stop" in epochs and "step" in epochs
+                ):
+                    raise ValueError(
+                        "time range ({:s}) requires start, stop, "
+                        "and step".format(str(epochs))
+                    )
             elif not isinstance(epochs, Sequence):
                 # turn scalars into list
                 epochs = [epochs]
-
+        self.query_type = query_type
         if isinstance(epochs, Sequence):
             # coerce iterable / scalar iso or dt inputs to jd
             is_not_jd = True
@@ -218,10 +226,16 @@ class LHorizons:
                         raise
 
         self.epochs = epochs
-        if id_type not in ['smallbody', 'majorbody',
-                           'designation', 'name',
-                           'asteroid_name', 'comet_name', 'id']:
-            raise ValueError('id_type ({:s}) not allowed'.format(id_type))
+        if id_type not in [
+            "smallbody",
+            "majorbody",
+            "designation",
+            "name",
+            "asteroid_name",
+            "comet_name",
+            "id",
+        ]:
+            raise ValueError("id_type ({:s}) not allowed".format(id_type))
         self.id_type = id_type
         self.session = session
         self.response = None
@@ -230,28 +244,34 @@ class LHorizons:
 
     def __str__(self):
         """
-    String representation of HorizonsClass object instance'
+        String representation of HorizonsClass object instance'
         """
-        return ('LHorizons instance \"{:s}\"; location={:s}, '
-                'epochs={:s}, id_type={:s}').format(
+        return (
+            'LHorizons instance "{:s}"; location={:s}, '
+            "epochs={:s}, id_type={:s}"
+        ).format(
             str(self.target_id),
             str(self.location),
             str(self.epochs),
-            str(self.id_type))
+            str(self.id_type),
+        )
 
-    def query(self, airmass_lessthan=99,
-              solar_elongation=(0, 180),
-              max_hour_angle=0,
-              rate_cutoff=None,
-              skip_daylight=False,
-              refraction=False,
-              refsystem='J2000',
-              closest_apparition=False,
-              no_fragments=False,
-              quantities: Union[int, str] = EPH_QUANTITIES,
-              extra_precision=False,
-              force_requery=False
-              ):
+    def query(
+        self,
+        airmass_lessthan=99,
+        solar_elongation=(0, 180),
+        max_hour_angle=0,
+        rate_cutoff=None,
+        skip_daylight=False,
+        refraction=False,
+        refsystem="J2000",
+        closest_apparition=False,
+        no_fragments=False,
+        quantities: Union[int, str] = EPH_QUANTITIES,
+        extra_precision=False,
+        force_requery=False,
+        query_type=None,
+    ):
 
         """
         Query JPL Horizons for ephemerides.
@@ -261,104 +281,146 @@ class LHorizons:
         if self.target_id is None:
             raise ValueError("'id' parameter not set. Query aborted.")
         if self.location is None:
-            self.location = '500@399'
+            self.location = "500@399"
         if self.epochs is None:
             self.epochs = Time.now().jd
 
+        if query_type is None:
+            query_type = self.query_type
+
         # assemble commandline based on self.id_type
         commandline = str(self.target_id)
-        if self.id_type in ['designation', 'name',
-                            'asteroid_name', 'comet_name']:
-            commandline = ({'designation': 'DES=',
-                            'name': 'NAME=',
-                            'asteroid_name': 'ASTNAM=',
-                            'comet_name': 'COMNAM='}[self.id_type] +
-                           commandline)
-        if self.id_type in ['smallbody', 'asteroid_name',
-                            'comet_name', 'designation']:
-            commandline += ';'
+        if self.id_type in [
+            "designation",
+            "name",
+            "asteroid_name",
+            "comet_name",
+        ]:
+            commandline = {
+                "designation": "DES=",
+                "name": "NAME=",
+                "asteroid_name": "ASTNAM=",
+                "comet_name": "COMNAM=",
+            }[self.id_type] + commandline
+        if self.id_type in [
+            "smallbody",
+            "asteroid_name",
+            "comet_name",
+            "designation",
+        ]:
+            commandline += ";"
             if isinstance(closest_apparition, bool):
                 if closest_apparition:
-                    commandline += ' CAP;'
+                    commandline += " CAP;"
             else:
-                commandline += ' CAP{:s};'.format(closest_apparition)
+                commandline += " CAP{:s};".format(closest_apparition)
             if no_fragments:
-                commandline += ' NOFRAG;'
+                commandline += " NOFRAG;"
 
-        request_payload = OrderedDict([
-            ('batch', 1),
-            ('TABLE_TYPE', 'OBSERVER'),
-            ('QUANTITIES', "'" + str(quantities) + "'"),
-            ('COMMAND', '"' + commandline + '"'),
-            ('SOLAR_ELONG', ('"' + str(solar_elongation[0]) + "," +
-                             str(solar_elongation[1]) + '"')),
-            ('LHA_CUTOFF', (str(max_hour_angle))),
-            ('CSV_FORMAT', 'YES'),
-            ('CAL_FORMAT', 'BOTH'),
-            ('ANG_FORMAT', 'DEG'),
-            # NOTE TO MICHAEL FROM SELF:
-            # that's a cute way to query values while assembling a literal
-            ('APPARENT', ({False: 'AIRLESS',
-                           True: 'REFRACTED'}[refraction])),
-            ('REF_SYSTEM', refsystem),
-            ('EXTRA_PREC', {True: 'YES', False: 'NO'}[extra_precision])])
+        request_payload = OrderedDict(
+            [
+                ("batch", 1),
+                ("TABLE_TYPE", query_type),
+                ("QUANTITIES", "'" + str(quantities) + "'"),
+                ("COMMAND", '"' + commandline + '"'),
+                (
+                    "SOLAR_ELONG",
+                    (
+                        '"'
+                        + str(solar_elongation[0])
+                        + ","
+                        + str(solar_elongation[1])
+                        + '"'
+                    ),
+                ),
+                ("LHA_CUTOFF", (str(max_hour_angle))),
+                ("CSV_FORMAT", "YES"),
+                ("CAL_FORMAT", "BOTH"),
+                ("ANG_FORMAT", "DEG"),
+                # NOTE TO MICHAEL FROM SELF:
+                # that's a cute way to query values while assembling a literal
+                (
+                    "APPARENT",
+                    ({False: "AIRLESS", True: "REFRACTED"}[refraction]),
+                ),
+                ("REF_SYSTEM", refsystem),
+                ("EXTRA_PREC", {True: "YES", False: "NO"}[extra_precision]),
+            ]
+        )
 
         if isinstance(self.location, dict):
-            if ('lon' not in self.location or 'lat' not in self.location or
-                    'elevation' not in self.location):
-                raise ValueError(("'location' must contain lon, lat, "
-                                  "elevation"))
+            if (
+                "lon" not in self.location
+                or "lat" not in self.location
+                or "elevation" not in self.location
+            ):
+                raise ValueError(
+                    ("'location' must contain lon, lat, " "elevation")
+                )
 
-            if 'body' not in self.location:
-                self.location['body'] = '399'
-            request_payload['CENTER'] = 'coord@{:s}'.format(
-                str(self.location['body']))
-            request_payload['COORD_TYPE'] = 'GEODETIC'
-            request_payload['SITE_COORD'] = "'{:f},{:f},{:f}'".format(
-                self.location['lon'], self.location['lat'],
-                self.location['elevation'])
+            if "body" not in self.location:
+                self.location["body"] = "399"
+            request_payload["CENTER"] = "coord@{:s}".format(
+                str(self.location["body"])
+            )
+            request_payload["COORD_TYPE"] = "GEODETIC"
+            request_payload["SITE_COORD"] = "'{:f},{:f},{:f}'".format(
+                self.location["lon"],
+                self.location["lat"],
+                self.location["elevation"],
+            )
         else:
-            request_payload['CENTER'] = "'" + str(self.location) + "'"
+            request_payload["CENTER"] = "'" + str(self.location) + "'"
 
         if rate_cutoff is not None:
-            request_payload['ANG_RATE_CUTOFF'] = (str(rate_cutoff))
+            request_payload["ANG_RATE_CUTOFF"] = str(rate_cutoff)
 
         # parse self.epochs
         if isinstance(self.epochs, (list, tuple, np.ndarray)):
-            request_payload['TLIST'] = "\n".join([str(epoch) for epoch in
-                                                  self.epochs])
+            request_payload["TLIST"] = "\n".join(
+                [str(epoch) for epoch in self.epochs]
+            )
         elif isinstance(self.epochs, dict):
-            if ('start' not in self.epochs or 'stop' not in self.epochs or
-                    'step' not in self.epochs):
-                raise ValueError("'epochs' must contain start, " +
-                                 "stop, step")
-            request_payload['START_TIME'] = (
-                    '"' + self.epochs['start'].replace("'", '') + '"')
-            request_payload['STOP_TIME'] = (
-                    '"' + self.epochs['stop'].replace("'", '') + '"')
-            request_payload['STEP_SIZE'] = (
-                    '"' + self.epochs['step'].replace("'", '') + '"')
+            if (
+                "start" not in self.epochs
+                or "stop" not in self.epochs
+                or "step" not in self.epochs
+            ):
+                raise ValueError(
+                    "'epochs' must contain start, " + "stop, step"
+                )
+            request_payload["START_TIME"] = (
+                '"' + self.epochs["start"].replace("'", "") + '"'
+            )
+            request_payload["STOP_TIME"] = (
+                '"' + self.epochs["stop"].replace("'", "") + '"'
+            )
+            request_payload["STEP_SIZE"] = (
+                '"' + self.epochs["step"].replace("'", "") + '"'
+            )
         else:
             # treat epochs as scalar
-            request_payload['TLIST'] = str(self.epochs)
+            request_payload["TLIST"] = str(self.epochs)
 
         if airmass_lessthan < 99:
-            request_payload['AIRMASS'] = str(airmass_lessthan)
+            request_payload["AIRMASS"] = str(airmass_lessthan)
 
         if skip_daylight:
-            request_payload['SKIP_DAYLT'] = 'YES'
+            request_payload["SKIP_DAYLT"] = "YES"
         else:
-            request_payload['SKIP_DAYLT'] = 'NO'
+            request_payload["SKIP_DAYLT"] = "NO"
 
         self.request_payload = request_payload
 
         # don't re-fetch an identical request unless explicitly told to
-        if reduce(and_,
-                  (
-                          self.response is not None,
-                          not force_requery,
-                          request_payload == self.request_payload
-                  )):
+        if reduce(
+            and_,
+            (
+                self.response is not None,
+                not force_requery,
+                request_payload == self.request_payload,
+            ),
+        ):
             return self.response
 
         # set return_raw flag, if raw response desired
@@ -380,22 +442,25 @@ class LHorizons:
 
         # check length of uri
         if len(self.uri) >= 2000:
-            warnings.warn(('The uri used in this query is very long '
-                           'and might have been truncated. The results of '
-                           'the query might be compromised. If you queried '
-                           'a list of epochs, consider querying a range.'))
+            warnings.warn(
+                (
+                    "The uri used in this query is very long "
+                    "and might have been truncated. The results of "
+                    "the query might be compromised. If you queried "
+                    "a list of epochs, consider querying a range."
+                )
+            )
         return response
 
     def table(self):
         if self.response is None:
             self.query()
-        if 'g:' in str(self.target_id):
+        if "g:" in str(self.target_id):
             get_target_location = True
         else:
             get_target_location = False
         frame = make_horizon_dataframe(
-            self.response.text,
-            get_target_location=get_target_location
+            self.response.text, get_target_location=get_target_location
         )
         return frame
 
@@ -411,25 +476,25 @@ class LHorizons:
         # we have to use regex here because sometimes they
         # put extra underscores for spacing
         pointing_column_patterns = {
-            r'Date_+\(UT\)': 'time',
-            r'Date_+JDUT': 'jd',
-            r'R.A.*\(ICRF\)': "ra_ast",  # astrometric ra
-            r'DEC.*\(ICRF\)': "dec_ast",  # astrometric dec
-            r'R.A.*\(rfct-app\)': 'ra_app_r',
+            r"Date_+\(UT\)": "time",
+            r"Date_+JDUT": "jd",
+            r"R.A.*\(ICRF\)": "ra_ast",  # astrometric ra
+            r"DEC.*\(ICRF\)": "dec_ast",  # astrometric dec
+            r"R.A.*\(rfct-app\)": "ra_app_r",
             # refracted apparent ra in weird frame?
-            r'DEC.*\(rfct-app\)': 'dec_app_r',
+            r"DEC.*\(rfct-app\)": "dec_app_r",
             # refracted apparent dec in weird frame?
-            r'R.A.*\(a-app\)': "ra_app",  # airless apparent ra in weird frame?
-            r'DEC.*\(a-app\)': "dec_app",
+            r"R.A.*\(a-app\)": "ra_app",  # airless apparent ra in weird frame?
+            r"DEC.*\(a-app\)": "dec_app",
             # airless apparent dec in weird frame?
-            r'RA.*\(ICRF-a-app\)': "ra_app_icrf",
-            r'DEC.*\(ICRF-a-app\)': "dec_app_icrf",
-            r'RA.*\(ICRF-r-app\)': "ra_app_icrf_r",
-            r'DEC.*\(ICRF-r-app\)': "dec_app_icrf_r",
+            r"RA.*\(ICRF-a-app\)": "ra_app_icrf",
+            r"DEC.*\(ICRF-a-app\)": "dec_app_icrf",
+            r"RA.*\(ICRF-r-app\)": "ra_app_icrf_r",
+            r"DEC.*\(ICRF-r-app\)": "dec_app_icrf_r",
             r"Azi.*\(a-app\)": "az",
             r"Elev.*\(a-app\)": "alt",
-            r'Azi.*\(r-appr\)': "az_r",
-            r'Elev.*\(r-appr\)': "alt_r",
+            r"Azi.*\(r-appr\)": "az_r",
+            r"Elev.*\(r-appr\)": "alt_r",
             "delta": "dist",
             "ObsSub-LON": "sub_lon",
             "ObsSub-LAT": "sub_lat",
@@ -440,12 +505,11 @@ class LHorizons:
             r"NP\.ang": "npa",
             "geo_lat": "geo_lat",
             "geo_lon": "geo_lon",
-            "geo_el": "geo_el"
+            "geo_el": "geo_el",
         }
         for pattern in pointing_column_patterns:
             matches = [
-                col for col in horizon_frame.columns
-                if re.match(pattern, col)
+                col for col in horizon_frame.columns if re.match(pattern, col)
             ]
             # did we not ask for this quantity? move on
             if len(matches) == 0:
@@ -454,13 +518,20 @@ class LHorizons:
             assert len(matches) == 1
             series = horizon_frame[matches[0]]
             output_name = pointing_column_patterns[pattern]
-            if pattern == r'Date_+\(UT\)':
+            if pattern == r"Date_+\(UT\)":
                 horizon_columns[output_name] = pd.Series(
                     [dtp.parse(instant) for instant in series]
                 )
-            if pattern.startswith((
-                    "R.A.", "DEC", "Azi", "Elev", "RA", "NP",
-            )):
+            if pattern.startswith(
+                (
+                    "R.A.",
+                    "DEC",
+                    "Azi",
+                    "Elev",
+                    "RA",
+                    "NP",
+                )
+            ):
                 try:
                     float(series[0])
                 except ValueError:
@@ -473,9 +544,9 @@ class LHorizons:
                 except ValueError:
                     # generally random spaces added after a minus sign
                     try:
-                        horizon_columns[
-                            output_name
-                        ] = series.str.replace(" ", "").astype(np.float64)
+                        horizon_columns[output_name] = series.str.replace(
+                            " ", ""
+                        ).astype(np.float64)
                     except ValueError:
                         # ok, something's actually wrong
                         raise
@@ -483,9 +554,9 @@ class LHorizons:
                 horizon_columns[output_name] = pd.Series(
                     [au_to_m * delta for delta in series.astype(np.float64)]
                 )
-            if pattern in ['ObsSub-LON', 'ObsSub-LAT']:
+            if pattern in ["ObsSub-LON", "ObsSub-LAT"]:
                 horizon_columns[output_name] = series.astype(np.float64)
-            if pattern == 'Ang-diam':
+            if pattern == "Ang-diam":
                 # convert from arcseconds to degree
                 horizon_columns[output_name] = series.astype(np.float64) / 3600
             # only present for lunar ephemerides with selenographic coords
@@ -499,11 +570,11 @@ class LHorizons:
 
 
 def get_lhorizon_moon(
-        lunar_coords,
-        time_series,
-        observer_location=-1,
-        query_options=None,
-        session=None
+    lunar_coords,
+    time_series,
+    observer_location=-1,
+    query_options=None,
+    session=None,
 ):
     """
     convenience method. gets lunar ephemerides from Horizons for arbitrary
@@ -546,7 +617,7 @@ def get_lhorizon_moon(
         id_type="id",
         location=observer_location,
         epochs=epochs,
-        session=session
+        session=session,
     )
     moon.query(**query_options)
 
@@ -562,7 +633,7 @@ def moon_phase(moontime):
     epochs = {
         "start": str(moontime.utc),
         "stop": str((moontime + 1 * u.min).utc),
-        "step": "1"
+        "step": "1",
     }
     phased_moon = LHorizons(target_id=301, id_type="id", epochs=epochs)
     phased_moon.query(quantities=10)
@@ -579,26 +650,28 @@ def moon_phase(moontime):
 # bulk query helpers
 # ####################
 HORIZON_TIME_ABBREVIATION_DICT = {
-    's': 1,
-    'm': 60,
-    'h': 60 * 60,
-    'd': 60 * 60 * 24,
-    'y': 60 * 60 * 24 * 365
+    "s": 1,
+    "m": 60,
+    "h": 60 * 60,
+    "d": 60 * 60 * 24,
+    "y": 60 * 60 * 24 * 365,
 }
 
 
 def datetime_from_horizons_syntax(start, stop, step):
     return {
-        'start': dtp.parse(start),
-        'stop': dtp.parse(stop),
-        'step size': HORIZON_TIME_ABBREVIATION_DICT[step[-1]] * int(step[:-1])
+        "start": dtp.parse(start),
+        "stop": dtp.parse(stop),
+        "step size": HORIZON_TIME_ABBREVIATION_DICT[step[-1]] * int(step[:-1]),
     }
 
 
 def estimate_line_count(start, stop, step):
     horizons_dt = datetime_from_horizons_syntax(start, stop, step)
-    return math.ceil((horizons_dt['stop'] - horizons_dt['start'])
-                     .total_seconds() / horizons_dt['step size'])
+    return math.ceil(
+        (horizons_dt["stop"] - horizons_dt["start"]).total_seconds()
+        / horizons_dt["step size"]
+    )
 
 
 def chunk_time(start, stop, step, chunk_size):
@@ -606,43 +679,43 @@ def chunk_time(start, stop, step, chunk_size):
     chunks = chunked(range(estimate_line_count(start, stop, step)), chunk_size)
     times = []
     for chunk in chunks:
-        start = horizons_dt['start'] + dt.timedelta(
-            seconds=horizons_dt['step size'] * chunk[0]
+        start = horizons_dt["start"] + dt.timedelta(
+            seconds=horizons_dt["step size"] * chunk[0]
         )
-        stop = horizons_dt['start'] + dt.timedelta(
-            seconds=horizons_dt['step size'] * chunk[-1]
+        stop = horizons_dt["start"] + dt.timedelta(
+            seconds=horizons_dt["step size"] * chunk[-1]
         )
-        times.append({
-            'start': start.isoformat(),
-            'stop': stop.isoformat(),
-            'step': step
-        })
+        times.append(
+            {
+                "start": start.isoformat(),
+                "stop": stop.isoformat(),
+                "step": step,
+            }
+        )
     return times
 
 
 def construct_bulk_horizon_query(
-        target_body_id,
-        observer_longitude,
-        observer_latitude,
-        observer_elevation,
-        observer_body_id,
-        start,
-        stop,
-        step,
-        chunksize=80000
+    target_body_id,
+    observer_body_id,
+    start,
+    stop,
+    step,
+    observer_coordinates=None,
+    query_type="OBSERVER",
+    chunksize=80000,
 ):
+
     session = requests.Session()
+    if observer_coordinates is not None:
+        observer_coordinates["body"] = observer_body_id
     partial_observation = partial(
         LHorizons,
         target_id=target_body_id,
-        location={
-            'lon': observer_longitude,
-            'lat': observer_latitude,
-            'elevation': observer_elevation,
-            'body': observer_body_id
-        },
+        location=observer_coordinates,
         id_type="id",
-        session = session
+        session=session,
+        query_type=query_type,
     )
     return [
         partial_observation(epochs=chunk)
@@ -654,10 +727,27 @@ def fetch_bulk_pointing_table(bulk_horizon_query):
     for horizon_query in bulk_horizon_query:
         horizon_query.query()
         print(
-            "collected data from " + horizon_query.epochs['start']
-            + " to " + horizon_query.epochs['stop']
+            "collected data from "
+            + horizon_query.epochs["start"]
+            + " to "
+            + horizon_query.epochs["stop"]
         )
-    print('concatenating all data')
-    return pd.concat([
-        horizon_query.pointing() for horizon_query in bulk_horizon_query
-    ])
+    print("concatenating all data")
+    return pd.concat(
+        [horizon_query.pointing() for horizon_query in bulk_horizon_query]
+    )
+
+
+def fetch_bulk_generic(bulk_horizon_query):
+    for horizon_query in bulk_horizon_query:
+        horizon_query.query()
+        print(
+            "collected data from "
+            + horizon_query.epochs["start"]
+            + " to "
+            + horizon_query.epochs["stop"]
+        )
+    print("concatenating all data")
+    return pd.concat(
+        [horizon_query.table() for horizon_query in bulk_horizon_query]
+    )
