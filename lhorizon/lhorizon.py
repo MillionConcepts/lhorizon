@@ -5,10 +5,11 @@ along with associated helper functions.
 
 It is rewritten from astroquery.JPLHorizons. it contains fixes and added
 functionality related to queries about targets and observers in arbitrary
-frames, as well as helpers for bulk downloads.
+frames, as well as helpers for bulk downloads. it loads results into pandas
+dataframes rather than astropy tables for increased performance (at the
+cost of integrated unit tracking).
 """
 
-# get all Horizons columns by default
 import datetime as dt
 import math
 import re
@@ -27,16 +28,11 @@ import pandas as pd
 import requests
 from astropy.time import Time
 
-# 'configuration options'
+from lhorizon.config import EPH_QUANTITIES, HORIZONS_SERVER, TIMEOUT
 from more_itertools import chunked
 from utils import snorm, listify
 
-EPH_QUANTITIES = "A"
 
-# timeout for connecting to jpl server
-TIMEOUT = 30
-
-HORIZONS_SERVER = "https://ssd.jpl.nasa.gov/horizons_batch.cgi"
 
 
 def hunt_csv(regex, body):
@@ -144,7 +140,7 @@ def make_horizon_dataframe(raw_horizon_response, get_target_location=False):
     return horizon_dataframe.dropna(axis=1)
 
 
-class LHorizons:
+class LHorizon:
     """
     A class for querying the
     `JPL Horizons <https://ssd.jpl.nasa.gov/horizons.cgi>`service.
@@ -465,11 +461,11 @@ class LHorizons:
         return frame
 
     def pointing(self):
-        # make a dataframe of pointing-relevant information
-        # from Horizons response text.
-        # make tractable column names.
-        # also convert distance units from AU to m
-        # and arcseconds to degrees
+        """
+        make a dataframe of pointing-relevant information
+        from Horizons response text. make tractable column names.
+        also convert distance units from AU to m and arcseconds to degrees.
+        """
         horizon_frame = self.table()
         au_to_m = (1 * u.au).to(u.m).value
         horizon_columns = {}
@@ -586,8 +582,7 @@ def get_lhorizon_moon(
     in quick succession. however, has the downside that it evenly spaces the
     sampled times across the interval defined by the time series, so there may
     be quantization errors if the series is also not evenly spaced. JPL
-    Horizons will also reject epochs that space samples by fewer than 0.5
-    seconds.
+    will also reject epochs that space samples by fewer than 0.5 seconds.
     """
 
     if query_options is None:
@@ -612,7 +607,7 @@ def get_lhorizon_moon(
         "step": str(len(time_series) - 1),
     }
 
-    moon = LHorizons(
+    moon = LHorizon(
         target_id=lunar_location,
         id_type="id",
         location=observer_location,
@@ -635,7 +630,7 @@ def moon_phase(moontime):
         "stop": str((moontime + 1 * u.min).utc),
         "step": "1",
     }
-    phased_moon = LHorizons(target_id=301, id_type="id", epochs=epochs)
+    phased_moon = LHorizon(target_id=301, id_type="id", epochs=epochs)
     phased_moon.query(quantities=10)
     illum = phased_moon.table()
     # translate percentage to degrees
@@ -710,7 +705,7 @@ def construct_bulk_horizon_query(
     if observer_coordinates is not None:
         observer_coordinates["body"] = observer_body_id
     partial_observation = partial(
-        LHorizons,
+        LHorizon,
         target_id=target_body_id,
         location=observer_coordinates,
         id_type="id",

@@ -1,13 +1,14 @@
+from collections.abc import Sequence
 from typing import Any
 
 from astropy.utils import isiterable
 
 
-def listify(thing: Any):
+def listify(thing: Any) -> list:
     """Always a list, for things that want lists"""
-    if isiterable(thing):
-        return list(thing)
-    return [thing]
+    if isinstance(thing, str) or (not isinstance(Sequence, thing)):
+        return [thing]
+    return list(thing)
 
 
 def snorm(thing, minimum=0, maximum=1, m0=None, m1=None):
