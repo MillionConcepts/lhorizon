@@ -1,278 +1,74 @@
 """
 some of these tests are near versions of ones in astroquery, some written by
 me and some preexisting.
-
-# TODO: add copyright
 """
 
-import pytest
-import os
-from collections import OrderedDict
+import re
 
-from numpy.ma import is_masked
-from astropy.tests.helper import assert_quantity_allclose
+from astropy.time import Time
 
 from lhorizon import LHorizon
-
-import json
-
-
-# The MockResponse class is currently relied upon in code and thus
-# temporarily got moved out of testing_tools to avoid adding pytest as a
-# mandatory dependency
-
-
-class MockResponse:
-    """
-    A mocked/non-remote version of `astroquery.query.AstroResponse`
-    """
-
-    def __init__(self, content=None, url=None, headers={}, content_type=None,
-                 stream=False, auth=None, status_code=200, verify=True,
-                 allow_redirects=True, json=None):
-        assert content is None or hasattr(content, 'decode')
-        self.content = content
-        self.raw = content
-        self.headers = headers
-        if content_type is not None:
-            self.headers.update({'Content-Type': content_type})
-        self.url = url
-        self.auth = auth
-        self.status_code = status_code
-
-    def iter_lines(self):
-        c = self.content.split(b"\n")
-        for l in c:
-            yield l
-
-    def raise_for_status(self):
-        pass
-
-    def json(self):
-        try:
-            return json.loads(self.content)
-        except TypeError:
-            return json.loads(self.content.decode('utf-8'))
-
-    @property
-    def text(self):
-        return self.content.decode(errors='replace')
-
+import lhorizon.tests.data.test_cases as test_cases
+from lhorizon.tests.utilz import make_mock_fetch
 
 # files in data/ for different query types
-DATA_FILES = {'ephemerides': 'ceres_ephemerides.txt',
-              'elements': 'ceres_elements.txt',
-              'vectors': 'ceres_vectors.txt',
-              '"2010 NY104;"': 'no_H.txt'}
 
+# DATA_FILES = {
+#     "ephemerides": "ceres_ephemerides.txt",
+#     "elements": "ceres_elements.txt",
+#     "vectors": "ceres_vectors.txt",
+#     '"2010 NY104;"': "no_H.txt",
+# }
 
-def data_path(filename):
-    data_dir = os.path.join(os.path.dirname(__file__), 'data')
-    return os.path.join(data_dir, filename)
-
-
-# monkeypatch replacement request function
-def nonremote_request(self, request_type, url, **kwargs):
-    if kwargs['params']['COMMAND'] == '"Ceres;"':
-        # pick DATA_FILE based on query type
-        query_type = {'OBSERVER': 'ephemerides',
-                      'ELEMENTS': 'elements',
-                      'VECTORS': 'vectors'}[kwargs['params']['TABLE_TYPE']]
-
-        with open(data_path(DATA_FILES[query_type]), 'rb') as f:
-            response = MockResponse(content=f.read(), url=url)
-    else:
-        with open(data_path(DATA_FILES[kwargs['params']['COMMAND']]),
-                  'rb') as f:
-            response = MockResponse(content=f.read(), url=url)
-
-    return response
-
+#
+# def data_path(filename):
+#     data_dir = os.path.join(os.path.dirname(__file__), "data")
+#     return os.path.join(data_dir, filename)
+#
 
 # use a pytest fixture to create a dummy 'requests.get' function,
 # that mocks(monkeypatches) the actual 'requests.get' function:
-@pytest.fixture
-def patch_request(request):
-    try:
-        mp = request.getfixturevalue("monkeypatch")
-    except AttributeError:  # pytest < 3
-        mp = request.getfuncargvalue("monkeypatch")
-    mp.setattr(LHorizon, '_request',
-               nonremote_request)
-    return mp
+# @pytest.fixture
+# def patch_request(request):
+#     monkeypatch = request.getfixturevalue("monkeypatch")
+#     monkeypatch.setattr(LHorizon, "response", nonremote_request)
+#     return monkeypatch
 
 
-# --------------------------------- actual test functions
+def test_prepare_request_1():
+    case = test_cases.CYDONIA_PALM_SPRINGS_1959_TOPO
+    test_lhorizon = LHorizon(**case["init_kwargs"])
+    test_lhorizon._prepare_request()
+    assert test_lhorizon.request.url == case["request_url"]
 
 
-def test_ephemerides_query(patch_request):
-    # check values of Ceres for a given epoch
-    # orbital uncertainty of Ceres is basically zero
-    res = LHorizon(target_id='Ceres', location='500',
-                   epochs=2451544.5).ephemerides()[0]
-
-    assert res['targetname'] == "1 Ceres (A801 AA)"
-    assert res['datetime_str'] == "2000-Jan-01 00:00:00.000"
-    assert res['solar_presence'] == ""
-    assert res['lunar_presence'] == ""
-    assert res['elongFlag'] == '/L'
-    assert res['airmass'] == 999
-
-    assert is_masked(res['AZ'])
-    assert is_masked(res['EL'])
-    assert is_masked(res['magextinct'])
-
-    assert_quantity_allclose(
-        [2451544.5,
-         188.70280, 9.09829, 34.40956, -2.68359,
-         8.33, 6.89, 96.17083,
-         161.3828, 10.4528, 2.551099019845, 0.1744492,
-         2.26315126366657, -21.9390513, 18.8220512,
-         95.3996, 22.5698, 292.551, 296.850,
-         184.3426280, 11.7996514, 289.864347, 71.545653,
-         0.000, 0.000],
-        [res['datetime_jd'],
-         res['RA'], res['DEC'], res['RA_rate'], res['DEC_rate'],
-         res['V'], res['surfbright'], res['illumination'],
-         res['EclLon'], res['EclLat'], res['r'], res['r_rate'],
-         res['delta'], res['delta_rate'], res['lighttime'],
-         res['elong'], res['alpha'], res['sunTargetPA'], res['velocityPA'],
-         res['ObsEclLon'], res['ObsEclLat'], res['GlxLon'], res['GlxLat'],
-         res['RA_3sigma'], res['DEC_3sigma']], rtol=1e-3)
+def test_prepare_request_2():
+    case = test_cases.MEUDON_MOON_NOW
+    test_lhorizon = LHorizon(**case["init_kwargs"])
+    test_lhorizon._prepare_request()
+    assert test_lhorizon.request.url.startswith(case["request_url"])
+    assert round(Time.now().jd, 4) == round(
+        float(
+            re.search(r"TLIST=([\d.]+)", test_lhorizon.request.url).group(1)
+        ),
+        4,
+    )
 
 
-def test_elements_query(patch_request):
-    # check values of Ceres for a given epoch
-    # orbital uncertainty of Ceres is basically zero
-    res = LHorizon(target_id='Ceres', location='500@10',
-                   epochs=2451544.5).elements()[0]
-
-    assert res['targetname'] == "1 Ceres (A801 AA)"
-    assert res['datetime_str'] == "A.D. 2000-Jan-01 00:00:00.0000"
-
-    assert_quantity_allclose(
-        [2451544.5,
-         7.837505767652506E-02, 2.549670133211852E+00,
-         1.058336086929457E+01,
-         8.049436516467529E+01, 7.392278852641589E+01,
-         2.451516163117752E+06,
-         2.141950393098222E-01, 6.069619607052192E+00,
-         7.121190541431409E+00,
-         2.766494282136041E+00, 2.983318431060230E+00,
-         1.680711192752127E+03],
-        [res['datetime_jd'],
-         res['e'], res['q'],
-         res['incl'],
-         res['Omega'], res['w'],
-         res['Tp_jd'],
-         res['n'], res['M'],
-         res['nu'],
-         res['a'], res['Q'],
-         res['P']], rtol=1e-3)
+def test_prepare_request_3():
+    case = test_cases.SUN_PHOBOS_1999
+    test_lhorizon = LHorizon(**case["init_kwargs"])
+    test_lhorizon._prepare_request()
+    assert test_lhorizon.request.url == case["request_url"]
 
 
-def test_elements_vectors(patch_request):
-    # check values of Ceres for a given epoch
-    # orbital uncertainty of Ceres is basically zero
-    res = LHorizon(target_id='Ceres', location='500@10',
-                   epochs=2451544.5).vectors()[0]
-
-    assert res['targetname'] == "1 Ceres (A801 AA)"
-    assert res['datetime_str'] == "A.D. 2000-Jan-01 00:00:00.0000"
-
-    assert_quantity_allclose(
-        [2451544.5,
-         -2.377530254715913E+00, 8.007773098011088E-01,
-         4.628376171505864E-01,
-         -3.605422534068209E-03, -1.057883330464988E-02,
-         3.379791158988872E-04,
-         1.473392692285918E-02, 2.551100364907553E+00,
-         1.007960852643289E-04],
-        [res['datetime_jd'],
-         res['x'], res['y'], res['z'],
-         res['vx'], res['vy'], res['vz'],
-         res['lighttime'], res['range'], res['range_rate']], rtol=1e-3)
-
-
-def test_ephemerides_query_payload():
-    obj = LHorizon(target_id='Halley', id_type='comet_name',
-                   location='290',
-                   epochs={'start': '2080-01-01',
-                            'stop': '2080-02-01',
-                            'step': '3h'})
-    res = obj.ephemerides(airmass_lessthan=1.2, skip_daylight=True,
-                          closest_apparition=True,
-                          max_hour_angle=10,
-                          solar_elongation=(150, 180),
-                          get_query_payload=True)
-
-    assert res == OrderedDict([
-        ('batch', 1),
-        ('TABLE_TYPE', 'OBSERVER'),
-        ('QUANTITIES', "'1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,"
-                       "18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,"
-                       "33,34,35,36,37,38,39,40,41,42,43'"),
-        ('COMMAND', '"COMNAM=Halley; CAP;"'),
-        ('SOLAR_ELONG', '"150,180"'),
-        ('LHA_CUTOFF', '10'),
-        ('CSV_FORMAT', 'YES'),
-        ('CAL_FORMAT', 'BOTH'),
-        ('ANG_FORMAT', 'DEG'),
-        ('APPARENT', 'AIRLESS'),
-        ('REF_SYSTEM', 'J2000'),
-        ('EXTRA_PREC', 'NO'),
-        ('CENTER', "'290'"),
-        ('START_TIME', '"2080-01-01"'),
-        ('STOP_TIME', '"2080-02-01"'),
-        ('STEP_SIZE', '"3h"'),
-        ('AIRMASS', '1.2'),
-        ('SKIP_DAYLT', 'YES')])
-
-
-def test_elements_query_payload():
-    res = (LHorizon(target_id='Ceres', location='500@10',
-                    epochs=2451544.5).elements(
-        get_query_payload=True))
-
-    assert res == OrderedDict([
-        ('batch', 1),
-        ('TABLE_TYPE', 'ELEMENTS'),
-        ('MAKE_EPHEM', 'YES'),
-        ('OUT_UNITS', 'AU-D'),
-        ('COMMAND', '"Ceres;"'),
-        ('CENTER', "'500@10'"),
-        ('CSV_FORMAT', 'YES'),
-        ('ELEM_LABELS', 'YES'),
-        ('OBJ_DATA', 'YES'),
-        ('REF_SYSTEM', 'J2000'),
-        ('REF_PLANE', 'ECLIPTIC'),
-        ('TP_TYPE', 'ABSOLUTE'),
-        ('TLIST', '2451544.5')])
-
-
-def test_vectors_query_payload():
-    res = LHorizon(target_id='Ceres', location='500@10',
-                   epochs=2451544.5).vectors(
-        get_query_payload=True)
-
-    assert res == OrderedDict([
-        ('batch', 1),
-        ('TABLE_TYPE', 'VECTORS'),
-        ('OUT_UNITS', 'AU-D'),
-        ('COMMAND', '"Ceres;"'),
-        ('CENTER', "'500@10'"),
-        ('CSV_FORMAT', '"YES"'),
-        ('REF_PLANE', 'ECLIPTIC'),
-        ('REF_SYSTEM', 'J2000'),
-        ('TP_TYPE', 'ABSOLUTE'),
-        ('LABELS', 'YES'),
-        ('VECT_CORR', '"NONE"'),
-        ('VEC_DELTA_T', 'NO'),
-        ('OBJ_DATA', 'YES'),
-        ('TLIST', '2451544.5')])
-
-
-def test_no_H(patch_request):
-    """testing missing H value (also applies for G, M1, k1, M2, k2)"""
-    res = LHorizon(target_id='2010 NY104').ephemerides()[0]
-    assert 'H' not in res
+# note that pd.read_csv behaves differently under test in PyCharm, for reasons
+# that must be horrible
+def test_make_table_1(mocker):
+    case = test_cases.CYDONIA_PALM_SPRINGS_1959_TOPO
+    mock_fetch = make_mock_fetch(case)
+    mocker.patch.object(LHorizon, "fetch", mock_fetch)
+    test_lhorizon = LHorizon(**case["init_kwargs"])
+    test_table = test_lhorizon.table()
+    assert tuple(test_table.columns.values) == case["table_columns"]
+    assert tuple(test_table['ra_ast'].values[12:15]) == case['ra_ast_12_15']
