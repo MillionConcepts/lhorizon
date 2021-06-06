@@ -1,8 +1,11 @@
 import re
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, Union
 
 import astropy.time as at
+import numpy as np
+from numpy.linalg import norm
+from numpy.typing import ArrayLike
 import pandas as pd
 import pandas.api.types
 
@@ -32,7 +35,7 @@ def snorm(thing, minimum=0, maximum=1, m0=None, m1=None):
 def hunt_csv(regex, body):
     """
     finds chunk of csv in a larger text file defined as regex, splits it,
-    and returns as list. useful only for single lines.
+    and returns as list. really useful only for single lines.
     worse than StringIO -> numpy or pandas csv reader in other cases.
     """
     csv_string = re.search(regex, body)[0]
@@ -74,3 +77,41 @@ def numeric_columns(data: pd.DataFrame) -> list[str]:
         for col in data.columns
         if pandas.api.types.is_numeric_dtype(data[col])
     ]
+
+
+def utc_to_et(utc):
+    """convert UTC -> 'seconds since J2000' format preferred by SPICE"""
+    return (at.Time(utc) - at.Time("J2000")).sec
+
+
+def utc_to_jd(utc):
+    """convert UTC string -> jd string -- for horizons or whatever"""
+    return at.Time(utc).jd
+
+
+def sph2cart(latitude, longitude, radius=1, unit="degrees"):
+    if unit == "degrees":
+        latitude = np.radians(latitude)
+        longitude = np.radians(longitude)
+    x0 = radius * np.cos(latitude) * np.cos(longitude)
+    y0 = radius * np.cos(latitude) * np.sin(longitude)
+    z0 = radius * np.sin(latitude)
+    return x0, y0, z0
+
+
+def cart2sph(x0, y0, z0, unit="degrees"):
+    radius = np.sqrt(x0 ** 2 + y0 ** 2 + z0 ** 2)
+    longitude = np.arctan(y0 / x0)
+    latitude = np.arcsin(z0 / np.sqrt(x0 ** 2 + y0 ** 2 + z0 ** 2))
+    if unit == "degrees":
+        latitude = np.degrees(latitude)
+        longitude = np.degrees(longitude)
+    return latitude, longitude, radius
+
+
+def hat(vector: np.array):
+    return vector / norm(vector)
+
+
+def unit_vectors(vectors: Sequence[ArrayLike]):
+    return [hat(np.array(vector)) for vector in vectors]

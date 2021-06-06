@@ -12,3 +12,4 @@ dependencies:
   - more-itertools
   - pytest
   - pytest-mock
+  - spiceypy
