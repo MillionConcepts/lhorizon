@@ -1,38 +1,13 @@
-"""
-some of these tests are near versions of ones in astroquery, some written by
-me and some preexisting.
-"""
-
 import re
+import warnings
 
 from astropy.time import Time
+import numpy as np
+import pytest
 
 from lhorizon import LHorizon
 import lhorizon.tests.data.test_cases as test_cases
-from lhorizon.tests.utilz import make_mock_fetch
-
-# files in data/ for different query types
-
-# DATA_FILES = {
-#     "ephemerides": "ceres_ephemerides.txt",
-#     "elements": "ceres_elements.txt",
-#     "vectors": "ceres_vectors.txt",
-#     '"2010 NY104;"': "no_H.txt",
-# }
-
-#
-# def data_path(filename):
-#     data_dir = os.path.join(os.path.dirname(__file__), "data")
-#     return os.path.join(data_dir, filename)
-#
-
-# use a pytest fixture to create a dummy 'requests.get' function,
-# that mocks(monkeypatches) the actual 'requests.get' function:
-# @pytest.fixture
-# def patch_request(request):
-#     monkeypatch = request.getfixturevalue("monkeypatch")
-#     monkeypatch.setattr(LHorizon, "response", nonremote_request)
-#     return monkeypatch
+from lhorizon.tests.utilz import make_mock_query
 
 
 def test_prepare_request_1():
@@ -62,13 +37,35 @@ def test_prepare_request_3():
     assert test_lhorizon.request.url == case["request_url"]
 
 
+def test_prepare_request_4():
+    case = test_cases.WEIRD_OPTIONS
+    test_lhorizon = LHorizon(**case["init_kwargs"])
+    assert test_lhorizon.request.url == case["request_url"]
+
+
+def test_reject_long_query():
+    with pytest.raises(ValueError):
+        LHorizon(epochs=[2459371 + i / 100 for i in range(10000)])
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        LHorizon(
+            epochs=[2459371 + i / 100 for i in range(10000)],
+            allow_long_queries=True,
+        )
+
+
 # note that pd.read_csv behaves differently under test in PyCharm, for reasons
 # that must be horrible
 def test_make_table_1(mocker):
     case = test_cases.CYDONIA_PALM_SPRINGS_1959_TOPO
-    mock_fetch = make_mock_fetch(case)
-    mocker.patch.object(LHorizon, "fetch", mock_fetch)
+    mock_query = make_mock_query(case)
+    mocker.patch.object(LHorizon, "query", mock_query)
     test_lhorizon = LHorizon(**case["init_kwargs"])
     test_table = test_lhorizon.table()
-    assert tuple(test_table.columns.values) == case["table_columns"]
-    assert tuple(test_table['ra_ast'].values[12:15]) == case['ra_ast_12_15']
+    assert (
+        ",".join(tuple(test_table.columns.values))
+        == case["observer_table_columns"]
+    )
+    assert np.allclose(
+        test_table["ra_ast"].values[12:15], np.array(case["ra_ast_12_15"])
+    )

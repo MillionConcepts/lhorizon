@@ -1,5 +1,10 @@
 import json
 
+from lhorizon._response_parsers import (
+    make_horizon_dataframe,
+    polish_horizons_table,
+)
+
 
 class MockResponse:
     """
@@ -46,9 +51,19 @@ class MockResponse:
             return json.loads(self.content.decode("utf-8"))
 
 
-def make_mock_fetch(test_case):
-    def mocked_fetch(self, *args, **kwargs):
-        with open(test_case["data_path"], "rb") as file:
+def make_mock_query(test_case, query_type_suffix="OBSERVER"):
+    def mock_query(self, *args, **kwargs):
+        with open(
+            test_case["data_path"] + "_" + query_type_suffix, "rb"
+        ) as file:
             self.response = MockResponse(content=file.read())
 
-    return mocked_fetch
+    return mock_query
+
+
+def parse_test_setup(case, query_type):
+    with open(case["data_path"] + "_" + query_type, "rb") as file:
+        test_text = file.read().decode()
+    test_df = make_horizon_dataframe(test_text)
+    test_table = polish_horizons_table(test_df, query_type)
+    return test_df, test_table

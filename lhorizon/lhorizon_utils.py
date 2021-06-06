@@ -49,8 +49,9 @@ def hunt_csv(regex, body):
 def convert_to_jd(epochs):
     epochs = listify(epochs)
     # astropy uses a nonstandard iso format with no T separator
-    if "T" in epochs[0]:
-        epochs = [epoch.replace("T", " ") for epoch in epochs]
+    if isinstance(epochs[0], str):
+        if "T" in epochs[0]:
+            epochs = [epoch.replace("T", " ") for epoch in epochs]
     # coerce iterable / scalar iso or dt inputs to jd
     is_not_jd = True
     formats = ["jd", "iso", "datetime"]

@@ -51,14 +51,17 @@ class LHorizon:
         id_type="majorbody",
         session=None,
         query_type="OBSERVER",
+        allow_long_queries = False,
+        query_options = None
     ):
         """
         Instantiate JPL HORIZONS interface object.
 
         Parameters
         ----------
-        target : str or int, required
-            Name, number, or designation of the object to be queried
+        target : str or int, optionsl
+            Name, number, or designation of the object to be queried. the Moon
+            is used if no target is passed.
         origin : int, str, or dict, optional
             Observer's location for ephemerides queries or center body name
             for orbital element or vector queries. Uses the same codes as
@@ -86,6 +89,16 @@ class LHorizon:
             ``'name'``, ``'asteroid_name'``, ``'comet_name'``,
             ``'id'`` (Horizons id number), or ``'smallbody'`` (find the
             closest match under any id_type), default: ``'smallbody'``
+        session: requests.Session, optional
+            session object for optimizing API calls. A new session is generated
+            if one is not passed.
+        allow_long_queries: bool, optional
+            if True, allows long (>2000 character) URLs to be used to query
+            JPL Horizons. These will often be truncated serverside, resulting
+            in unexpected output, and so are not allowed by default.
+        query_options: dict, optional
+            additional Horizons query options. See documentation for a list of
+            supported options.
         """
         if isinstance(target, Mapping):
             target = self._prep_geodetic_location(target)
@@ -111,6 +124,12 @@ class LHorizon:
         self.session = session
         self.response = None
         self.request = None
+        self.allow_long_queries = allow_long_queries
+        if query_options is None:
+            query_options = {}
+        self.query_options = query_options
+        self._prepare_request(**self.query_options)
+
 
     # TODO: determine if these might be nicer as properties
     def dataframe(self):
@@ -131,9 +150,10 @@ class LHorizon:
 
     def table(self):
         """
-        attempt to format it more nicely. may fail depending on query type.
+        attempt to format the horizons response in a slightly fancier way,
+        with regularized units and so on
         """
-        return polish_horizons_table(self.dataframe())
+        return polish_horizons_table(self.dataframe(), self.query_type)
 
     def check_queried(self):
         # it's not a requery if no query appears to have been performed or if
@@ -144,34 +164,38 @@ class LHorizon:
         # it is a requery
         return self.response.url == self.request.url
 
-    def fetch(self, refetch=False):
+    def query(self, refetch=False):
         """
         fetch data from HORIZONS. if we have already fetched with identical
         parameters, don't fetch again unless explicitly told to.
         """
         if refetch or not self.check_queried():
             self.response = self.session.send(self.request, timeout=TIMEOUT)
-        self._check_url_length()
-
-    def query(self, *, refetch=False, **query_options):
-        """
-        Query JPL Horizons. See documentation for a full list of kwargs
-        """
-        self._prepare_request(**query_options)
-        self.fetch(refetch)
 
     def _check_url_length(self):
         # TODO: consider moving this up in the process before they send a query
         """warn user about long urls that HORIZONS may reject"""
-        if len(self.response.url) >= 2000:
-            warnings.warn(
-                (
-                    "The url used in this query is very long "
-                    "and might have been truncated. The results of "
-                    "the query might be compromised. If you queried "
-                    "a list of epochs, consider querying a range."
+        if len(self.request.url) >= 2000:
+            if self.allow_long_queries is True:
+                warnings.warn(
+                    (
+                        "The url used in this query is very long "
+                        "and might have been truncated. The results of "
+                        "the query might be compromised. If you queried "
+                        "a list of epochs, consider querying a range."
+                    )
                 )
-            )
+            else:
+                raise ValueError(
+                    "The url used in this query is > 2000 characters. It is "
+                    "likely to be truncated serverside and produce unexpected "
+                    "results. If you queried a list of epochs, consider "
+                    "querying a range; also consider using one of the helper "
+                    "functions for bulk queries in lhorizon.handlers. If "
+                    "you're absolutely sure you want to send this query, "
+                    "initialize this LHorizons object again with "
+                    "allow_long_queries=True."
+                    )
 
     def _prepare_request(
         self,
@@ -219,6 +243,7 @@ class LHorizon:
         # build, prep, and store request
         request = requests.Request("GET", HORIZONS_SERVER, params=params)
         self.request = self.session.prepare_request(request)
+        self._check_url_length()
 
     @staticmethod
     def _prep_epochs(epochs):

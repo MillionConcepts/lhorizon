@@ -1,7 +1,6 @@
 """configuration options for lhorizon"""
 
 # get all Horizons columns by default
-from types import MappingProxyType
 
 EPH_QUANTITIES = "A"
 
@@ -10,10 +9,22 @@ TIMEOUT = 30
 
 HORIZONS_SERVER = "https://ssd.jpl.nasa.gov/horizons_batch.cgi"
 
-# table of regexes used to match Horizons fields and the arguably-more-readable
+# tables of regexes used to match Horizons fields and the arguably-more-readable
 # column names we assign them to
-POINTING_COLUMN_PATTERNS = MappingProxyType(
-    {
+TABLE_PATTERNS = {
+    "VECTORS": {
+        r"Calendar Date": "time_tdb",
+        r"X": "x",
+        r"Y": "y",
+        r"Z": "z",
+        r"VX": "vx",
+        r"VY": "vy",
+        r"VZ": "vz",
+        r"LT": "light_time",
+        r"RG": "dist",
+        r"RR": "velocity",
+    },
+    "OBSERVER": {
         r"Date_+\(UT\)": "time",
         r"Date_+JDUT": "jd",
         r"R.A.*\(ICRF\)": "ra_ast",  # astrometric ra
@@ -44,8 +55,9 @@ POINTING_COLUMN_PATTERNS = MappingProxyType(
         "geo_lat": "geo_lat",
         "geo_lon": "geo_lon",
         "geo_el": "geo_el",
-    }
-)
+    },
+}
+
 
 KNOWN_ID_TYPES = (
     "smallbody",
