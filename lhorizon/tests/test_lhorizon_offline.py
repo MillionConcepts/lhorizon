@@ -8,19 +8,19 @@ import pytest
 
 from lhorizon import LHorizon
 from lhorizon.lhorizon_utils import numeric_columns
-import lhorizon.tests.data.test_cases as test_cases
+from lhorizon.tests.data.test_cases import TEST_CASES
 from lhorizon.tests.utilz import make_mock_query
 
 
 def test_prepare_request_1():
-    case = test_cases.CYDONIA_PALM_SPRINGS_1959_TOPO
+    case = TEST_CASES["CYDONIA_PALM_SPRINGS_1959_TOPO"]
     test_lhorizon = LHorizon(**case["init_kwargs"])
     test_lhorizon._prepare_request()
     assert test_lhorizon.request.url == case["request_url"]
 
 
 def test_prepare_request_2():
-    case = test_cases.MEUDON_MOON_NOW
+    case = TEST_CASES["MEUDON_MOON_NOW"]
     test_lhorizon = LHorizon(**case["init_kwargs"])
     test_lhorizon._prepare_request()
     assert test_lhorizon.request.url.startswith(case["request_url"])
@@ -33,14 +33,14 @@ def test_prepare_request_2():
 
 
 def test_prepare_request_3():
-    case = test_cases.SUN_PHOBOS_1999
+    case = TEST_CASES["SUN_PHOBOS_1999"]
     test_lhorizon = LHorizon(**case["init_kwargs"])
     test_lhorizon._prepare_request()
     assert test_lhorizon.request.url == case["request_url"]
 
 
 def test_prepare_request_4():
-    case = test_cases.WEIRD_OPTIONS
+    case = TEST_CASES["WEIRD_OPTIONS"]
     test_lhorizon = LHorizon(**case["init_kwargs"])
     assert test_lhorizon.request.url == case["request_url"]
 
@@ -59,7 +59,7 @@ def test_reject_long_query():
 # note that pd.read_csv behaves differently under test in PyCharm, for reasons
 # that must be horrible
 def test_make_table_1(mocker):
-    case = test_cases.CYDONIA_PALM_SPRINGS_1959_TOPO
+    case = TEST_CASES["CYDONIA_PALM_SPRINGS_1959_TOPO"]
     mock_query = make_mock_query(case)
     mocker.patch.object(LHorizon, "query", mock_query)
     test_lhorizon = LHorizon(**case["init_kwargs"])

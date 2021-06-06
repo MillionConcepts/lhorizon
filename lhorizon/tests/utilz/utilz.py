@@ -86,14 +86,7 @@ def check_against_reference(case, query_type, test_df, test_table):
     )
 
 
-def execute_parser_test(case, query_type):
-    path = case["data_path"] + "_" + query_type
-    with open(path, "rb") as file:
-        test_text = file.read().decode()
-    test_df = make_horizon_dataframe(test_text)
-    test_table = polish_horizons_table(test_df, query_type)
-    check_against_reference(case, query_type, test_df, test_table)
-    logging.getLogger().info(path + " parsed")
+
 
 
 
