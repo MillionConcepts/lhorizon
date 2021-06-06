@@ -3,9 +3,11 @@ import warnings
 
 from astropy.time import Time
 import numpy as np
+import pandas as pd
 import pytest
 
 from lhorizon import LHorizon
+from lhorizon.lhorizon_utils import numeric_columns
 import lhorizon.tests.data.test_cases as test_cases
 from lhorizon.tests.utilz import make_mock_query
 
@@ -61,11 +63,13 @@ def test_make_table_1(mocker):
     mock_query = make_mock_query(case)
     mocker.patch.object(LHorizon, "query", mock_query)
     test_lhorizon = LHorizon(**case["init_kwargs"])
-    test_table = test_lhorizon.table()
+    table = test_lhorizon.table()
     assert (
-        ",".join(tuple(test_table.columns.values))
-        == case["observer_table_columns"]
+        ",".join(tuple(table.columns.values)) == case["observer_table_columns"]
+    )
+    saved_numeric_table = pd.read_csv(
+        case["data_path"] + "_OBSERVER_table.csv"
     )
     assert np.allclose(
-        test_table["ra_ast"].values[12:15], np.array(case["ra_ast_12_15"])
+        table[numeric_columns(table)].values, saved_numeric_table.values
     )

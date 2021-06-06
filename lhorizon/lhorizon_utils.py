@@ -3,6 +3,8 @@ from collections.abc import Sequence
 from typing import Any
 
 import astropy.time as at
+import pandas as pd
+import pandas.api.types
 
 
 def listify(thing: Any) -> list:
@@ -64,3 +66,11 @@ def convert_to_jd(epochs):
             if len(formats) == 0:
                 raise ex
     return epochs
+
+
+def numeric_columns(data: pd.DataFrame) -> list[str]:
+    return [
+        col
+        for col in data.columns
+        if pandas.api.types.is_numeric_dtype(data[col])
+    ]

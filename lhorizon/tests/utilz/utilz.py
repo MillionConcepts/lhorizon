@@ -1,9 +1,14 @@
 import json
+import logging
 
+import numpy as np
+import pandas as pd
+from lhorizon import LHorizon
 from lhorizon._response_parsers import (
     make_horizon_dataframe,
     polish_horizons_table,
 )
+from lhorizon.lhorizon_utils import numeric_columns
 
 
 class MockResponse:
@@ -61,9 +66,38 @@ def make_mock_query(test_case, query_type_suffix="OBSERVER"):
     return mock_query
 
 
-def parse_test_setup(case, query_type):
-    with open(case["data_path"] + "_" + query_type, "rb") as file:
+def check_against_reference(case, query_type, test_df, test_table):
+    path = case["data_path"] + "_" + query_type
+    ref_df = pd.read_csv(path + "_df.csv")
+    ref_table = pd.read_csv(path + "_table.csv")
+    if query_type.lower() + "_table_columns" in case.keys():
+        assert (
+                ",".join(test_table.columns.to_list())
+                == case[query_type.lower() + "_table_columns"]
+        )
+    if query_type.lower() + "_df_columns" in case.keys():
+        assert (
+                ",".join(test_df.columns.to_list())
+                == case[query_type.lower() + "_df_columns"]
+        )
+    assert np.allclose(test_df[numeric_columns(test_df)], ref_df.values)
+    assert np.allclose(
+        test_table[numeric_columns(test_table)], ref_table.values
+    )
+
+
+def execute_parser_test(case, query_type):
+    path = case["data_path"] + "_" + query_type
+    with open(path, "rb") as file:
         test_text = file.read().decode()
     test_df = make_horizon_dataframe(test_text)
     test_table = polish_horizons_table(test_df, query_type)
-    return test_df, test_table
+    check_against_reference(case, query_type, test_df, test_table)
+    logging.getLogger().info(path + " parsed")
+
+
+
+
+
+
+

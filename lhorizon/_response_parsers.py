@@ -77,12 +77,11 @@ def clean_up_observer_series(pattern, series):
     if pattern == r"Date_+\(UT\)":
         return pd.Series([dtp.parse(instant) for instant in series])
     if pattern.startswith(("R.A.", "DEC", "Azi", "Elev", "RA", "NP")):
-        try:
-            float(series[0])
-        except ValueError:
+        if isinstance(series.iloc[0], str):
             # generally "n. a." values for locations that apparent az
             # / alt aren't meaningful for, like earth topocenter
-            return
+            if "n" in series.iloc[0]:
+                return
         try:
             return series.astype(np.float64)
         except ValueError:
