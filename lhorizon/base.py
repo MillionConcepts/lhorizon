@@ -11,18 +11,12 @@ cost of integrated unit tracking).
 """
 
 import warnings
-from typing import Mapping, Union
+from typing import Mapping
 
 import requests
 from astropy.time import Time
 
-from lhorizon.config import (
-    EPH_QUANTITIES,
-    HORIZONS_SERVER,
-    TIMEOUT,
-    KNOWN_ID_TYPES,
-    KNOWN_QUERY_TYPES,
-)
+import lhorizon.config as config
 from lhorizon._response_parsers import (
     make_horizon_dataframe,
     polish_horizons_table,
@@ -32,10 +26,17 @@ from lhorizon._request_formatters import (
     make_commandline,
     assemble_request_params,
     format_epoch_params,
-    format_geodetic_origin
+    format_geodetic_origin,
 )
 
 from lhorizon.lhorizon_utils import convert_to_jd
+
+
+def default_lhorizon_session():
+    session = requests.Session()
+    session.stream = True
+    session.headers = config.DEFAULT_HEADERS
+    return session
 
 
 class LHorizon:
@@ -43,6 +44,7 @@ class LHorizon:
     A class for querying and formatting data from the
     `JPL Horizons <https://ssd.jpl.nasa.gov/horizons.cgi>`service.
     """
+
     def __init__(
         self,
         target="301",
@@ -51,8 +53,8 @@ class LHorizon:
         id_type="majorbody",
         session=None,
         query_type="OBSERVER",
-        allow_long_queries = False,
-        query_options = None
+        allow_long_queries=False,
+        query_options=None,
     ):
         """
         Instantiate JPL HORIZONS interface object.
@@ -91,7 +93,9 @@ class LHorizon:
             closest match under any id_type), default: ``'smallbody'``
         session: requests.Session, optional
             session object for optimizing API calls. A new session is generated
-            if one is not passed.
+            if one is not passed. 'Stream' parameter is always forced to True
+            due to apparent issues (as of June 2021) with Horizons SSL socket
+            handling.
         allow_long_queries: bool, optional
             if True, allows long (>2000 character) URLs to be used to query
             JPL Horizons. These will often be truncated serverside, resulting
@@ -106,21 +110,24 @@ class LHorizon:
         if isinstance(origin, Mapping):
             origin = self._prep_geodetic_location(origin)
         self.location = origin
-        if query_type not in KNOWN_QUERY_TYPES:
+        if query_type not in config.KNOWN_QUERY_TYPES:
             raise ValueError(
                 "only "
-                + str(KNOWN_QUERY_TYPES)
+                + str(config.KNOWN_QUERY_TYPES)
                 + " are understood as query types."
             )
         self.query_type = query_type
         self.epochs = self._prep_epochs(epochs)
-        if id_type not in KNOWN_ID_TYPES:
+        if id_type not in config.KNOWN_ID_TYPES:
             raise ValueError(
-                "only " + str(KNOWN_ID_TYPES) + " are understood as id types."
+                "only "
+                + str(config.KNOWN_ID_TYPES)
+                + " are understood as id types."
             )
         self.id_type = id_type
         if session is None:
-            session = requests.Session()
+            session = default_lhorizon_session()
+        session.stream = True
         self.session = session
         self.response = None
         self.request = None
@@ -130,7 +137,6 @@ class LHorizon:
         self.query_options = query_options
         self._prepare_request(**self.query_options)
 
-
     # TODO: determine if these might be nicer as properties
     def dataframe(self):
         """
@@ -139,7 +145,7 @@ class LHorizon:
         """
         if self.response is None:
             self.query()
-        if "g:" in str(self.target):
+        if ("g:" in str(self.target)) or isinstance(self.target, Mapping):
             get_target_location = True
         else:
             get_target_location = False
@@ -170,32 +176,9 @@ class LHorizon:
         parameters, don't fetch again unless explicitly told to.
         """
         if refetch or not self.check_queried():
-            self.response = self.session.send(self.request, timeout=TIMEOUT)
-
-    def _check_url_length(self):
-        # TODO: consider moving this up in the process before they send a query
-        """warn user about long urls that HORIZONS may reject"""
-        if len(self.request.url) >= 2000:
-            if self.allow_long_queries is True:
-                warnings.warn(
-                    (
-                        "The url used in this query is very long "
-                        "and might have been truncated. The results of "
-                        "the query might be compromised. If you queried "
-                        "a list of epochs, consider querying a range."
-                    )
-                )
-            else:
-                raise ValueError(
-                    "The url used in this query is > 2000 characters. It is "
-                    "likely to be truncated serverside and produce unexpected "
-                    "results. If you queried a list of epochs, consider "
-                    "querying a range; also consider using one of the helper "
-                    "functions for bulk queries in lhorizon.handlers. If "
-                    "you're absolutely sure you want to send this query, "
-                    "initialize this LHorizons object again with "
-                    "allow_long_queries=True."
-                    )
+            self.response = self.session.send(
+                self.request, timeout=config.TIMEOUT
+            )
 
     def _prepare_request(
         self,
@@ -208,7 +191,7 @@ class LHorizon:
         refsystem="J2000",
         closest_apparition=False,
         no_fragments=False,
-        quantities: Union[int, str] = EPH_QUANTITIES,
+        quantities=None,
         extra_precision=False,
     ):
 
@@ -216,6 +199,9 @@ class LHorizon:
         command = make_commandline(
             self.target, self.id_type, closest_apparition, no_fragments
         )
+        if quantities is None:
+            quantities = getattr(config, self.query_type + "_QUANTITIES")
+
         # TODO: document this
         params = assemble_request_params(
             command,
@@ -240,10 +226,38 @@ class LHorizon:
             params["SKIP_DAYLT"] = "YES"
         else:
             params["SKIP_DAYLT"] = "NO"
+
         # build, prep, and store request
-        request = requests.Request("GET", HORIZONS_SERVER, params=params)
+        request = requests.Request(
+            "GET", config.HORIZONS_SERVER, params=params
+        )
         self.request = self.session.prepare_request(request)
         self._check_url_length()
+
+    def _check_url_length(self):
+        # TODO: consider moving this up in the process before they send a query
+        """warn user about long urls that HORIZONS may reject"""
+        if len(self.request.url) >= 2000:
+            if self.allow_long_queries is True:
+                warnings.warn(
+                    (
+                        "The url used in this query is very long "
+                        "and might have been truncated. The results of "
+                        "the query might be compromised. If you queried "
+                        "a list of epochs, consider querying a range."
+                    )
+                )
+            else:
+                raise ValueError(
+                    "The url used in this query is > 2000 characters. It is "
+                    "likely to be truncated serverside and produce unexpected "
+                    "results. If you queried a list of epochs, consider "
+                    "querying a range; also consider using one of the helper "
+                    "functions for bulk queries in lhorizon.handlers. If "
+                    "you're absolutely sure you want to send this query, "
+                    "initialize this LHorizons object again with "
+                    "allow_long_queries=True."
+                )
 
     @staticmethod
     def _prep_epochs(epochs):
@@ -251,8 +265,7 @@ class LHorizon:
             return Time.now().jd
         if isinstance(epochs, Mapping):
             if not (
-                    "start" in epochs and "stop" in epochs and "step" in
-                    epochs
+                "start" in epochs and "stop" in epochs and "step" in epochs
             ):
                 raise ValueError(
                     "time range ({:s}) requires start, stop, "
@@ -264,14 +277,12 @@ class LHorizon:
 
     @staticmethod
     def _prep_geodetic_location(location):
-        if (
-                "lon" not in location
-                or "lat" not in location
-                or "elevation" not in location
-        ):
-            raise ValueError("'location' must contain lon, lat, " "elevation")
+        if "lon" not in location or "lat" not in location:
+            raise ValueError("'location' must contain at least lon & lat")
         if "body" not in location:
             location["body"] = "399"
+        if "elevation" not in location:
+            location["elevation"] = "0"
         return location
 
     def __str__(self):
@@ -279,13 +290,19 @@ class LHorizon:
         String representation of LHorizon object instance'
         """
         return (
-            'LHorizons instance "{:s}"; location={:s}, '
-            "epochs={:s}, id_type={:s}"
+            "LHorizon: target={:s}; location={:s}; "
+            "epochs={:s}; id_type={:s}; {}"
+            ""
         ).format(
             str(self.target),
             str(self.location),
             str(self.epochs),
             str(self.id_type),
+            "queried" if self.check_queried() else "not queried",
         )
 
-
+    def __repr__(self):
+        """
+        String representation of LHorizon object instance'
+        """
+        return self.__str__()

@@ -70,27 +70,26 @@ def check_against_reference(case, query_type, test_df, test_table):
     path = case["data_path"] + "_" + query_type
     ref_df = pd.read_csv(path + "_df.csv")
     ref_table = pd.read_csv(path + "_table.csv")
-    if query_type.lower() + "_table_columns" in case.keys():
-        assert (
-                ",".join(test_table.columns.to_list())
-                == case[query_type.lower() + "_table_columns"]
+    # chop off columns that are produced after response
+    if "geo_lon" in test_df.columns:
+        test_table = test_table.drop(
+            columns=["geo_lon", "geo_lat", "geo_el"], errors="ignore"
         )
-    if query_type.lower() + "_df_columns" in case.keys():
-        assert (
-                ",".join(test_df.columns.to_list())
-                == case[query_type.lower() + "_df_columns"]
+        test_df = test_df.drop(
+            columns=["geo_lon", "geo_lat", "geo_el"], errors="ignore"
         )
-    assert np.allclose(test_df[numeric_columns(test_df)], ref_df.values)
+
+    if "geo_lon" in ref_df.columns:
+        ref_table = ref_table.drop(
+            columns=["geo_lon", "geo_lat", "geo_el"], errors="ignore"
+        )
+        ref_df = ref_df.drop(
+            columns=["geo_lon", "geo_lat", "geo_el"], errors="ignore"
+        )
     assert np.allclose(
-        test_table[numeric_columns(test_table)], ref_table.values
+        test_df[numeric_columns(test_df)], ref_df[numeric_columns(ref_df)]
     )
-
-
-
-
-
-
-
-
-
-
+    assert np.allclose(
+        test_table[numeric_columns(test_table)],
+        ref_table[numeric_columns(ref_table)],
+    )

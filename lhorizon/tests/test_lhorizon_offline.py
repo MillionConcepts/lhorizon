@@ -64,12 +64,8 @@ def test_make_table_1(mocker):
     mocker.patch.object(LHorizon, "query", mock_query)
     test_lhorizon = LHorizon(**case["init_kwargs"])
     table = test_lhorizon.table()
-    assert (
-        ",".join(tuple(table.columns.values)) == case["observer_table_columns"]
-    )
-    saved_numeric_table = pd.read_csv(
-        case["data_path"] + "_OBSERVER_table.csv"
-    )
+    saved_table = pd.read_csv(case["data_path"] + "_OBSERVER_table.csv")
     assert np.allclose(
-        table[numeric_columns(table)].values, saved_numeric_table.values
+        table[numeric_columns(table)].values,
+        saved_table[numeric_columns(saved_table)].values,
     )

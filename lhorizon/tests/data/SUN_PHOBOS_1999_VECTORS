@@ -14,7 +14,7 @@
  
  
 *******************************************************************************
-Ephemeris / WWW_USER Sat Jun  5 17:05:30 2021 Pasadena, USA      / Horizons
+Ephemeris / WWW_USER Tue Jun  8 13:39:03 2021 Pasadena, USA      / Horizons
 *******************************************************************************
 Target body name: Phobos (401)                    {source: mar097}
 Center body name: Sun (10)                        {source: mar097}
@@ -80,7 +80,7 @@ Geometric states/elements have no aberrations applied.
 
 !$$SOF
 TABLE_TYPE = VECTORS
-QUANTITIES = 'A'
+QUANTITIES = '3'
 COMMAND = "Phobos"
 SOLAR_ELONG = "0,180"
 LHA_CUTOFF = 0

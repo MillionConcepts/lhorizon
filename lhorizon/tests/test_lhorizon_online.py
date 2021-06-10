@@ -1,22 +1,21 @@
 # TODO: mark this as slow using pytest.mark, only run if specifically indicated
 import logging
 import math
-from itertools import product
 import random
+from itertools import product
 
 import pytest
-import requests
 
-from lhorizon import LHorizon
+from lhorizon.base import default_lhorizon_session, LHorizon
+from lhorizon.config import HORIZONS_SERVER
 from lhorizon.tests.data.test_cases import TEST_CASES
 from lhorizon.tests.utilz import check_against_reference
-from lhorizon.config import HORIZONS_SERVER
 
-test_session = requests.session()
+test_session = default_lhorizon_session()
 
 
 def test_if_horizons_is_reachable():
-    response = test_session.get(HORIZONS_SERVER)
+    response = default_lhorizon_session().get(HORIZONS_SERVER)
     assert response.status_code == 200
 
 
@@ -34,7 +33,7 @@ test_parameters = product(cases.keys(), ("OBSERVER", "VECTORS"))
 def test_full_retrieval(case_name, query_type):
     case = cases[case_name]
     test_lhorizon = LHorizon(
-        **case["init_kwargs"], query_type=query_type, session=test_session
+        **case["init_kwargs"], query_type=query_type, session=default_lhorizon_session()
     )
     test_df = test_lhorizon.dataframe()
     test_table = test_lhorizon.table()

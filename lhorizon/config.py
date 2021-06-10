@@ -1,16 +1,23 @@
 """configuration options for lhorizon"""
 
-# get all Horizons columns by default
 
-EPH_QUANTITIES = "A"
-
+# default Horizons columns
+OBSERVER_QUANTITIES = "1,2,4,13,14,15,17,20,45"
+VECTORS_QUANTITIES = "3"
 # timeout for connecting to jpl server
 TIMEOUT = 30
 
 HORIZONS_SERVER = "https://ssd.jpl.nasa.gov/horizons_batch.cgi"
+DEFAULT_HEADERS = {
+    "Accept": "text/plain,text/html,application/xhtml+xml,"
+              "application/xml;q=0.9,,*/*;q=0.8",
+    "Connection": "keep-alive",
 
-# tables of regexes used to match Horizons fields and the arguably-more-readable
-# column names we assign them to
+}
+
+
+# tables of regexes used to match Horizons fields and the arguably
+# more-readable column names we assign them to
 TABLE_PATTERNS = {
     "VECTORS": {
         r"Calendar Date": "time_tdb",

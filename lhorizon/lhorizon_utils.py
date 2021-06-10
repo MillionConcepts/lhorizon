@@ -1,13 +1,14 @@
 import re
 from collections.abc import Sequence
+from functools import reduce
+from operator import or_
 from typing import Any, Union
 
 import astropy.time as at
 import numpy as np
-from numpy.linalg import norm
-from numpy.typing import ArrayLike
 import pandas as pd
 import pandas.api.types
+from numpy.linalg import norm
 
 
 def listify(thing: Any) -> list:
@@ -96,7 +97,19 @@ def sph2cart(latitude, longitude, radius=1, unit="degrees"):
     x0 = radius * np.cos(latitude) * np.cos(longitude)
     y0 = radius * np.cos(latitude) * np.sin(longitude)
     z0 = radius * np.sin(latitude)
+
+    if reduce(
+        or_, map(is_it(pd.DataFrame, pd.Series), [latitude, longitude, radius])
+    ):
+        return pd.DataFrame({"x": x0, "y": y0, "z": z0})
     return x0, y0, z0
+
+
+def is_it(*types):
+    def it_is(whatever):
+        return isinstance(whatever, types)
+
+    return it_is
 
 
 def cart2sph(x0, y0, z0, unit="degrees"):
@@ -106,12 +119,25 @@ def cart2sph(x0, y0, z0, unit="degrees"):
     if unit == "degrees":
         latitude = np.degrees(latitude)
         longitude = np.degrees(longitude)
+    if reduce(or_, map(is_it(pd.DataFrame, pd.Series), [x0, y0, z0])):
+        return pd.DataFrame({"lat": latitude, "lon": longitude, "r": radius})
     return latitude, longitude, radius
 
 
-def hat(vector: np.array):
-    return vector / norm(vector)
+def hats(vectors: Union[np.ndarray, pd.DataFrame]):
+    norms = np.linalg.norm(vectors, axis=-1)
+    return vectors / np.array(norms)[..., None]
 
 
-def unit_vectors(vectors: Sequence[ArrayLike]):
-    return [hat(np.array(vector)) for vector in vectors]
+def make_raveled_meshgrid(axes, axis_names):
+    assert len(axes) == len(axis_names)
+    axis_len = axes[0].shape[0]
+    index_mesh = np.meshgrid(*[np.arange(axis_len) for _ in axes])
+    meshgrid = np.meshgrid(*[axis for axis in axes])
+    indices = {
+        axis_names[ix] + "_ix": np.ravel(index_mesh[ix]) for ix, _ in enumerate(axes)
+    }
+    grids = {
+        axis_names[ix]: np.ravel(grid) for ix, grid in enumerate(meshgrid)
+    }
+    return pd.DataFrame(grids | indices)
