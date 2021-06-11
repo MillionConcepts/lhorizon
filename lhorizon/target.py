@@ -218,17 +218,30 @@ class Targeter:
                 "Please initialize topocentric targets with find_targets() "
                 "or a similar function before attempting a reference shift."
             )
-        body_to_target_vectors = (
-            self.ephemerides["topocentric"][["x", "y", "z"]]
-            - self.ephemerides["body"][["x", "y", "z"]]
-        )
+
         if source_frame != target_frame:
-            epochs_et = utc_to_et(self.ephemerides["body"]["time"])
+            try:
+                epochs_et = utc_to_et(self.ephemerides["body"]["time"])
+            except ValueError:
+                epochs_et = utc_to_et(
+                    self.ephemerides["body"]["time"].astype("datetime64")
+                )
             # implicitly handling wide/grid case
-            if (len(epochs_et) == 1) and (len(body_to_target_vectors) != 1):
+            if (len(epochs_et) == 1) and (
+                len(self.ephemerides["topocentric"]) != 1
+            ):
                 wide = True
+                body_to_target_vectors = (
+                    self.ephemerides["topocentric"][["x", "y", "z"]]
+                    - self.ephemerides["body"][["x", "y", "z"]].iloc[0]
+                )
+
             else:
                 wide = False
+                body_to_target_vectors = (
+                    self.ephemerides["topocentric"][["x", "y", "z"]]
+                    - self.ephemerides["body"][["x", "y", "z"]]
+                )
             body_to_target_vectors[
                 ["x", "y", "z", "lon", "lat"]
             ] = array_reference_shift(
@@ -248,7 +261,6 @@ class Targeter:
         )
         intersection["ix"] = ix
         return intersection
-
 
     def _coerce_pointing_ephemeris(self, pointings):
         if isinstance(pointings, LHorizon):
