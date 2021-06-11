@@ -10,3 +10,6 @@ dependencies:
   - requests
   - astropy
   - more-itertools
+  - pytest
+  - pytest-mock
+  - spiceypy

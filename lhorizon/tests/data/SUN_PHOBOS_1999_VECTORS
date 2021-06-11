@@ -1,0 +1,95 @@
+*******************************************************************************
+ Revised: Sep 28, 2012             Phobos / (Mars)                          401
+
+ SATELLITE PHYSICAL PROPERTIES:
+  Radius (km)             = 13.1 x11.1 x9.3 Density (g cm^-3)   =  1.90 +- 0.08
+  Mass (10^20 kg )        =  1.08 (10^-4)   Geometric Albedo    =  0.06 
+                                 (+- 0.1)   V(1,0)              = +11.8
+
+ SATELLITE ORBITAL DATA:
+  Semi-major axis, a (km) = 9.3772(10^3)    Orbital period      = 0.319 d
+  Eccentricity, e         = 0.0151          Rotational period   = Synchronous
+  Inclination, i  (deg)   = 1.082
+*******************************************************************************
+ 
+ 
+*******************************************************************************
+Ephemeris / WWW_USER Tue Jun  8 13:39:03 2021 Pasadena, USA      / Horizons
+*******************************************************************************
+Target body name: Phobos (401)                    {source: mar097}
+Center body name: Sun (10)                        {source: mar097}
+Center-site name: BODY CENTER
+*******************************************************************************
+Start time      : A.D. 1991-Jan-01 00:00:00.0000 TDB
+Stop  time      : A.D. 1991-Jan-01 00:00:00.5000 TDB
+Step-size       : 0 steps
+*******************************************************************************
+Center geodetic : 0.00000000,0.00000000,0.0000000 {E-lon(deg),Lat(deg),Alt(km)}
+Center cylindric: 0.00000000,0.00000000,0.0000000 {E-lon(deg),Dxy(km),Dz(km)}
+Center radii    : 696000.0 x 696000.0 x 696000.0 k{Equator, meridian, pole}    
+Output units    : KM-S
+Output type     : GEOMETRIC cartesian states
+Output format   : 3 (position, velocity, LT, range, range-rate)
+Reference frame : Ecliptic of J2000.0
+*******************************************************************************
+            JDTDB,            Calendar Date (TDB),                      X,                      Y,                      Z,                     VX,                     VY,                     VZ,                     LT,                     RG,                     RR,
+**************************************************************************************************************************************************************************************************************************************************************************
+$$SOE
+2448257.500000000, A.D. 1991-Jan-01 00:00:00.0000,  2.790203303287968E+07,  2.306370439912541E+08,  4.142401293155164E+06, -2.481125518784036E+01,  6.025764596906465E+00,  1.541101570048055E+00,  7.750548845381727E+02,  2.323556089206050E+08,  3.029253035834770E+00,
+$$EOE
+**************************************************************************************************************************************************************************************************************************************************************************
+Coordinate system description:
+
+  Ecliptic at the standard reference epoch
+
+    Reference epoch: J2000.0
+    X-Y plane: adopted Earth orbital plane at the reference epoch
+               Note: obliquity of 84381.448 arcseconds (IAU76) wrt ICRF equator
+    X-axis   : ICRF
+    Z-axis   : perpendicular to the X-Y plane in the directional (+ or -) sense
+               of Earth's north pole at the reference epoch.
+
+  Symbol meaning:
+
+    JDTDB    Julian Day Number, Barycentric Dynamical Time
+      X      X-component of position vector (km)
+      Y      Y-component of position vector (km)
+      Z      Z-component of position vector (km)
+      VX     X-component of velocity vector (km/sec)                           
+      VY     Y-component of velocity vector (km/sec)                           
+      VZ     Z-component of velocity vector (km/sec)                           
+      LT     One-way down-leg Newtonian light-time (sec)
+      RG     Range; distance from coordinate center (km)
+      RR     Range-rate; radial velocity wrt coord. center (km/sec)
+
+Geometric states/elements have no aberrations applied.
+
+
+ Computations by ...
+     Solar System Dynamics Group, Horizons On-Line Ephemeris System
+     4800 Oak Grove Drive, Jet Propulsion Laboratory
+     Pasadena, CA  91109   USA
+     Information  : https://ssd.jpl.nasa.gov/
+     Documentation: https://ssd.jpl.nasa.gov/?horizons_doc
+     Connect      : https://ssd.jpl.nasa.gov/?horizons (browser)
+                    telnet ssd.jpl.nasa.gov 6775       (command-line)
+                    e-mail command interface available
+                    Script and CGI interfaces available
+     Author       : Jon.D.Giorgini@jpl.nasa.gov
+*******************************************************************************
+
+!$$SOF
+TABLE_TYPE = VECTORS
+QUANTITIES = '3'
+COMMAND = "Phobos"
+SOLAR_ELONG = "0,180"
+LHA_CUTOFF = 0
+CSV_FORMAT = YES
+CAL_FORMAT = BOTH
+ANG_FORMAT = DEG
+APPARENT = AIRLESS
+REF_SYSTEM = J2000
+EXTRA_PREC = NO
+CENTER = '@sun'
+TLIST = 2448257.5
+SKIP_DAYLT = NO
