@@ -1,5 +1,3 @@
-# **warning: not-even-unstable future branch in process of reorganization. do not use.**
-
 # lhorizon
 
 ## introduction
@@ -15,13 +13,15 @@ process I extended it to implement a more efficient parser, add support for fast
 pandas dataframes rather than astropy tables (they are very powerful, but too slow for the applications I wrote this 
 for).
 
-See [mars_sun_angle.ipynb](lhorizon/examples/mars_sun_angle.ipynb) and 
-[galex_vectors.ipynb](lhorizon/examples/galex_vectors.ipynb) for simple examples of usage. More examples and associated 
-utilities forthcoming.
+This is a prerelease of lhorizons 1.0, which completes and rationalizes the interface, adds a submodule for figuring 
+out, in target-body-centric coordinates, what part of a solar system body something is pointing at, and adds reasonably 
+complete test coverage.
 
 ## cautions
 
-This module only officially supports observer / ephemeris Horizons queries. Vector support is present and in the process 
-of being documented. Element queries may or may not work. 
+Examples are in flux and should not be used; updated versions are forthcoming shortly.
+
+This module only officially supports observer / ephemeris and vector Horizons queries. Osculating elements queries are 
+not officially supported and may behave in unexpected ways.
 
 This software is in early alpha stage. Bugs are expected; please report them. 
