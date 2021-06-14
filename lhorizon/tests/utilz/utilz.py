@@ -1,13 +1,8 @@
 import json
-import logging
 
 import numpy as np
 import pandas as pd
-from lhorizon import LHorizon
-from lhorizon._response_parsers import (
-    make_horizon_dataframe,
-    polish_horizons_table,
-)
+
 from lhorizon.lhorizon_utils import numeric_columns
 
 
@@ -15,7 +10,6 @@ class MockResponse:
     """
     a mock requests response
     """
-
     def __init__(
         self,
         content=None,
@@ -57,6 +51,7 @@ class MockResponse:
 
 
 def make_mock_query(test_case, query_type_suffix="OBSERVER"):
+    """mock wrapper for LHorizon.query()"""
     def mock_query(self, *args, **kwargs):
         with open(
             test_case["data_path"] + "_" + query_type_suffix, "rb"
@@ -67,6 +62,10 @@ def make_mock_query(test_case, query_type_suffix="OBSERVER"):
 
 
 def check_against_reference(case, query_type, test_df, test_table):
+    """
+    skeleton test function for comparing the output of a response parser with
+    a saved table
+    """
     path = case["data_path"] + "_" + query_type
     ref_df = pd.read_csv(path + "_df.csv")
     ref_table = pd.read_csv(path + "_table.csv")
@@ -78,7 +77,6 @@ def check_against_reference(case, query_type, test_df, test_table):
         test_df = test_df.drop(
             columns=["geo_lon", "geo_lat", "geo_el"], errors="ignore"
         )
-
     if "geo_lon" in ref_df.columns:
         ref_table = ref_table.drop(
             columns=["geo_lon", "geo_lat", "geo_el"], errors="ignore"

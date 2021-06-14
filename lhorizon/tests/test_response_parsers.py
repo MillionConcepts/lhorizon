@@ -1,8 +1,8 @@
 from itertools import product
 
 import pytest
-from lhorizon._response_parsers import make_horizon_dataframe, \
-    polish_horizons_table
+from lhorizon._response_parsers import make_lhorizon_dataframe, \
+    polish_lhorizon_dataframe
 from lhorizon.tests.data.test_cases import TEST_CASES
 from lhorizon.tests.utilz import check_against_reference
 
@@ -16,11 +16,11 @@ test_parameters = product(cases.keys(), ("OBSERVER", "VECTORS"))
 
 
 @pytest.mark.parametrize("case_name,query_type", test_parameters)
-def test_response_parser(case_name, query_type):
+def test_response_parser(case_name: str, query_type: str):
     case = cases[case_name]
     path = case["data_path"] + "_" + query_type
     with open(path, "rb") as file:
         test_text = file.read().decode()
-    test_df = make_horizon_dataframe(test_text)
-    test_table = polish_horizons_table(test_df, query_type)
+    test_df = make_lhorizon_dataframe(test_text)
+    test_table = polish_lhorizon_dataframe(test_df, query_type)
     check_against_reference(case, query_type, test_df, test_table)

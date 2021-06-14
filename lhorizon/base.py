@@ -1,25 +1,21 @@
 """
-This module implements a class for querying the
-`JPL Horizons <https://ssd.jpl.nasa.gov/horizons.cgi>`service,
-along with associated helper functions.
-
-It is rewritten from astroquery.JPLHorizons. it contains fixes and added
-functionality related to queries about targets and observers in arbitrary
-frames, as well as helpers for bulk downloads. it loads results into pandas
-dataframes rather than astropy tables for increased performance (at the
-cost of integrated unit tracking).
+This is the base module for `lhorizon`. It implements a class, `LHorizon`,
+used to query the `JPL Horizons <https://ssd.jpl.nasa.gov/horizons.cgi>`
+solar system ephemerides service.
 """
 
+from collections.abc import Mapping, MutableMapping, Sequence
+from typing import Union, Optional
 import warnings
-from typing import Mapping
 
+import pandas as pd
 import requests
 from astropy.time import Time
 
 import lhorizon.config as config
 from lhorizon._response_parsers import (
-    make_horizon_dataframe,
-    polish_horizons_table,
+    make_lhorizon_dataframe,
+    polish_lhorizon_dataframe,
 )
 
 from lhorizon._request_formatters import (
@@ -40,50 +36,59 @@ class LHorizon:
 
     def __init__(
         self,
-        target="301",
-        origin="500@399",
-        epochs=None,
-        id_type="majorbody",
-        session=None,
-        query_type="OBSERVER",
-        allow_long_queries=False,
-        query_options=None,
+        target: Union[int, str, MutableMapping] = "301",
+        origin: Union[int, str, MutableMapping] = "500@399",
+        epochs: Optional[Union[str, float, Mapping]] = None,
+        session: Optional[requests.Session] = None,
+        query_type: str = "OBSERVER",
+        allow_long_queries: bool = False,
+        query_options: Optional[Mapping] = None,
     ):
         """
-        Instantiate JPL HORIZONS interface object.
+        JPL HORIZONS interface object, the core class of `lhorizon`.
 
         Parameters
         ----------
-        target : str or int, optionsl
+        target : str or int, optional
             Name, number, or designation of the object to be queried. the Moon
-            is used if no target is passed.
+            is used if no target is passed. Arbitrary topocentric coordinates
+            can also be provided in a dict, like:
+            {
+                'lon': longitude in deg,
+                'lat': latitude in deg (North positive, South negative),
+                'elevation': elevation in km above the reference ellipsoid,
+                ['body': Horizons body ID of the central body; optional;
+                Earth is used if it is not provided.]
+            }.
+            Horizons must possess a rotational model and reference ellipsoid
+            for the central body in order to process topocentric queries --
+            don't expect this to work with artificial satellites or most small
+            bodies, for instance.  Also note that Horizons always treats
+            west-longitude as positive for prograde bodies and east-longitude
+            as positive for retrograde bodies, with the very notable
+            exceptions of the Earth, Moon, and Sun; despite the fact that they
+            are prograde, it treats east-longitude as positive on these three
+            bodies.
         origin : int, str, or dict, optional
-            Observer's location for ephemerides queries or center body name
-            for orbital element or vector queries. Uses the same codes as
-            JPL Horizons. If no location is provided, Earth's center is
-            used. Arbitrary topocentic coordinates for ephemerides queries
-            can be provided in the format of a dictionary. The dictionary
-            has to be of the form {``'lon'``: longitude in deg (East
-            positive, West negative), ``'lat'``: latitude in deg (North
-            positive, South negative), ``'elevation'``: elevation in km
-            above the reference ellipsoid, [``'body'``: Horizons body ID of
-            the central body; optional; if this value is not provided it is
-            assumed that this location is on Earth]}.
-        epochs : Any, dict[str, str] or Sequence[str, dt.datetime], optional
+            Coordinate origin (representing central body or observer location).
+            Uses the same codes as JPL Horizons -- in some cases, text will
+            work, in some cases it will not. If no location is provided,
+            Earth's center is used. Arbitrary topocentic coordinates can also
+            be given as a dict, in the same format as the target parameter.
+        epochs : dict[str, str] or Sequence[str, float, dt.datetime], optional
             Either a scalar in any astropy.time - parsable format,
-            a list of epochs in JD, MJD, iso, or dt format, or a dict
-            defining a range of times and dates; the range dictionary has to
-            be of the form {``'start'``:'YYYY-MM-DD [HH:MM:SS]',
-            ``'stop'``:'YYYY-MM-DD [HH:MM:SS]', ``'step'``:'n[y|d|m|s]'}.
-            Timescale is UTC. If no epochs are provided, the current time is
-            used.
-        id_type : str, optional
-            Identifier type, options:
-            ``'smallbody'``, ``'majorbody'`` (planets but also
-            anything that is not a small body), ``'designation'``,
-            ``'name'``, ``'asteroid_name'``, ``'comet_name'``,
-            ``'id'`` (Horizons id number), or ``'smallbody'`` (find the
-            closest match under any id_type), default: ``'smallbody'``
+            a list of epochs in jd, iso, or dt format, or a dict
+            defining a range of times and dates. Timescale is UTC. If no
+            epochs are provided, the current time is used. Scalars or range
+            dictionaries are preferred over lists, as they tend to be
+            processed more easily by Horizons. The range dictionary format is:
+            {
+                ``'start'``:'YYYY-MM-DD [HH:MM:SS.fff]',
+                ``'stop'``:'YYYY-MM-DD [HH:MM:SS.fff]',
+                ``'step'``:'n[y|d|m]'
+            }
+            If no units are provided for step, Horizons evenly divides the
+            period between start and stop into n intervals.
         session: requests.Session, optional
             session object for optimizing API calls. A new session is generated
             if one is not passed.
@@ -95,10 +100,10 @@ class LHorizon:
             additional Horizons query options. See documentation for a list of
             supported options.
         """
-        if isinstance(target, Mapping):
+        if isinstance(target, MutableMapping):
             target = self._prep_geodetic_location(target)
         self.target = target
-        if isinstance(origin, Mapping):
+        if isinstance(origin, MutableMapping):
             origin = self._prep_geodetic_location(origin)
         self.location = origin
         if query_type not in config.KNOWN_QUERY_TYPES:
@@ -109,13 +114,6 @@ class LHorizon:
             )
         self.query_type = query_type
         self.epochs = self._prep_epochs(epochs)
-        if id_type not in config.KNOWN_ID_TYPES:
-            raise ValueError(
-                "only "
-                + str(config.KNOWN_ID_TYPES)
-                + " are understood as id types."
-            )
-        self.id_type = id_type
         if session is None:
             session = default_lhorizon_session()
         self.session = session
@@ -125,13 +123,16 @@ class LHorizon:
         if query_options is None:
             query_options = {}
         self.query_options = query_options
-        self.prepare_request(**self.query_options)
+        self.prepare_request()
 
-    # TODO: determine if these might be nicer as properties
-    def dataframe(self):
+    def dataframe(self) -> pd.DataFrame:
         """
-        perform query if not yet queried. return as a dataframe with mostly-as-
-        sent column names &c.
+        return a DataFrame containing minimally-formatted response text from
+        JPL Horizons -- column names and quantities as sent, with almost no
+        changes but whitespace stripping.
+
+        this function triggers a query to JPL Horizons if a query has not yet
+        been sent. Otherwise, it uses the cached response.
         """
         if self.response is None:
             self.query()
@@ -139,19 +140,33 @@ class LHorizon:
             get_target_location = True
         else:
             get_target_location = False
-        frame = make_horizon_dataframe(
-            self.response.text, get_target_location=get_target_location
+        frame = make_lhorizon_dataframe(
+            self.response.text, topocentric_target=get_target_location
         )
         return frame
 
-    def table(self):
+    def table(self) -> pd.DataFrame:
         """
-        attempt to format the horizons response in a slightly fancier way,
-        with regularized units and so on
-        """
-        return polish_horizons_table(self.dataframe(), self.query_type)
+        return a DataFrame with additional formatting. Regularizes column
+        names, casts times to datetime, attempts to regularize units. All
+        contents should be in m-s. JPL Horizons has an extremely wide range of
+        special-case response formatting, so if these heuristics prune
+        necessary columns or appear to perform incorrect conversions, fall
+        back to LHorizon.dataframe().
 
-    def check_queried(self):
+        this function triggers a query to JPL Horizons if a query has not yet
+        been sent. Otherwise, it uses the cached response.
+        """
+        return polish_lhorizon_dataframe(self.dataframe(), self.query_type)
+
+    def check_queried(self) -> bool:
+        """
+        determine whether this LHorizon has been queried with its currently-
+        formatted request. Note that if you manually change the request
+        parameters of a queried LHorizon and do not subsequently call
+        LHorizon.prepare_request(), LHorizon.check_queried() will
+        'incorrectly' return True.
+        """
         # it's not a requery if no query appears to have been performed or if
         # someone has messed with the object in some weird way
         if (self.response is None) or (self.request is None):
@@ -160,34 +175,48 @@ class LHorizon:
         # it is a requery
         return self.response.url == self.request.url
 
-    def query(self, refetch=False):
+    def query(self, refetch: bool = False) -> None:
         """
-        fetch data from HORIZONS. if we have already fetched with identical
-        parameters, don't fetch again unless explicitly told to.
+        send this LHorizon's currently-formatted request to JPL HORIZONS and
+        update this LHorizon's response attribute. if we have already fetched
+        with identical parameters, don't fetch again unless explicitly told to.
         """
         if refetch or not self.check_queried():
             self.response = self.session.send(
                 self.request, timeout=config.TIMEOUT
             )
 
-    def prepare_request(
+    def prepare_request(self):
+        """
+        Prepare request using active session and parameters. this is called
+        automatically by LHorizon.__init__(), but can also be called after
+        query parameters or request have been manually altered.
+        """
+        self._prepare(**self.query_options)
+
+    def _prepare(
         self,
-        airmass_lessthan=99,
-        solar_elongation=(0, 180),
-        max_hour_angle=0,
-        rate_cutoff=None,
-        skip_daylight=False,
-        refraction=False,
-        refsystem="J2000",
+        airmass_lessthan: int = 99,
+        solar_elongation: Sequence[int] = (0, 180),
+        max_hour_angle: int = 0,
+        rate_cutoff: Optional[float] = None,
+        skip_daylight: bool = False,
+        refraction: bool = False,
+        refsystem: str = "J2000",
         closest_apparition=False,
         no_fragments=False,
         quantities=None,
         extra_precision=False,
     ):
+        """
+        sets up url parameters and calls self.session.prepare_request(). this
+        should generally not be called directly; call self.prepare_request()
+        after properly formatting self.query_options or other parameters.
+        """
 
         # assemble 'command line' (convention from original telnet interface)
         command = make_commandline(
-            self.target, self.id_type, closest_apparition, no_fragments
+            self.target, closest_apparition, no_fragments
         )
         if quantities is None:
             quantities = getattr(config, self.query_type + "_QUANTITIES")
@@ -225,8 +254,10 @@ class LHorizon:
         self._check_url_length()
 
     def _check_url_length(self):
-        # TODO: consider moving this up in the process before they send a query
-        """warn user about long urls that HORIZONS may reject"""
+        """
+        Raise an error for long urls that HORIZONS may truncate. If
+        self.allow_long_queries is True, simply issue a warning.
+        """
         if len(self.request.url) >= 2000:
             if self.allow_long_queries is True:
                 warnings.warn(
@@ -250,7 +281,11 @@ class LHorizon:
                 )
 
     @staticmethod
-    def _prep_epochs(epochs):
+    def _prep_epochs(epochs: Union[str, float, Mapping]):
+        """
+        convert epochs to a standardized form. should generally only be called
+        by __init__
+        """
         if epochs is None:
             return Time.now().jd
         if isinstance(epochs, Mapping):
@@ -266,7 +301,11 @@ class LHorizon:
         return epochs
 
     @staticmethod
-    def _prep_geodetic_location(location):
+    def _prep_geodetic_location(location: MutableMapping):
+        """
+        convert geodetic location dicts to a standardized form. should
+        generally only be called by __init__
+        """
         if "lon" not in location or "lat" not in location:
             raise ValueError("'location' must contain at least lon & lat")
         if "body" not in location:
@@ -277,17 +316,14 @@ class LHorizon:
 
     def __str__(self):
         """
-        String representation of LHorizon object instance'
+        String representation of LHorizon
         """
         return (
-            "LHorizon: target={:s}; location={:s}; "
-            "epochs={:s}; id_type={:s}; {}"
-            ""
+            "LHorizon: target={:s}; location={:s}; epochs={:s}; {}" ""
         ).format(
             str(self.target),
             str(self.location),
             str(self.epochs),
-            str(self.id_type),
             "queried" if self.check_queried() else "not queried",
         )
 

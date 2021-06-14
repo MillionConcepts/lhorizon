@@ -51,36 +51,17 @@ def format_epoch_params(epochs):
     return epoch_payload
 
 
-def make_commandline(target, id_type, closest_apparition, no_fragments):
+def make_commandline(target, closest_apparition, no_fragments):
     if isinstance(target, Mapping):
         target = format_geodetic_target(target)
     commandline = str(target)
-    if id_type in [
-        "designation",
-        "name",
-        "asteroid_name",
-        "comet_name",
-    ]:
-        commandline = {
-            "designation": "DES=",
-            "name": "NAME=",
-            "asteroid_name": "ASTNAM=",
-            "comet_name": "COMNAM=",
-        }[id_type] + commandline
-    if id_type in [
-        "smallbody",
-        "asteroid_name",
-        "comet_name",
-        "designation",
-    ]:
-        commandline += ";"
-        if isinstance(closest_apparition, bool):
-            if closest_apparition:
-                commandline += " CAP;"
-        else:
-            commandline += " CAP{:s};".format(closest_apparition)
-        if no_fragments:
-            commandline += " NOFRAG;"
+    if isinstance(closest_apparition, bool):
+        if closest_apparition:
+            commandline += " CAP;"
+    else:
+        commandline += " CAP{:s};".format(closest_apparition)
+    if no_fragments:
+        commandline += " NOFRAG;"
     return commandline
 
 
