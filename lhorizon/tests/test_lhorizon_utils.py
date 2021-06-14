@@ -1,4 +1,5 @@
 import math
+import re
 
 import numpy as np
 import pandas as pd
@@ -47,7 +48,7 @@ def test_sph2cart():
 
 
 def test_hunt_csv():
-    raining = r"(?<=cats).*(?=dogs)"
+    raining = re.compile(r"(?<=cats).*(?=dogs)")
     some_csv = "catssomething,something_else,1,2dogs"
     assert hunt_csv(raining, some_csv) == [
         "something",

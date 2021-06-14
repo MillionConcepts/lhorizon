@@ -1,10 +1,15 @@
-"""specialized query helpers for lhorizon"""
-
+"""
+This module contains a number of specialized query constructors and related
+helper functions for lhorizon.
+"""
+import logging
+from collections.abc import Mapping, MutableMapping, Sequence
 import datetime as dt
 import math
 import re
 import time
 from types import MappingProxyType
+from typing import Union, Optional
 
 import dateutil.parser as dtp
 import numpy as np
@@ -16,8 +21,15 @@ from lhorizon import LHorizon
 from lhorizon.lhorizon_utils import default_lhorizon_session
 
 
-def estimate_line_count(horizons_dt, seconds_per_step):
-
+def estimate_line_count(
+    horizons_dt: MutableMapping[str, dt.datetime], seconds_per_step: float
+):
+    """
+    estimate the number of lines that will be returned by Horizons for a given
+    query. Cannot give correct answers for cases in which airmass, hour
+    angle, or other restrictive options are set. Used by bulk query
+    constructors to help split large queries across multiple LHorizons.
+    """
     return math.ceil(
         (horizons_dt["stop"] - horizons_dt["start"]).total_seconds()
         / seconds_per_step
@@ -26,7 +38,6 @@ def estimate_line_count(horizons_dt, seconds_per_step):
 
 HORIZON_TIME_ABBREVIATIONS = MappingProxyType(
     {
-        "s": 1,
         "m": 60,
         "h": 60 * 60,
         "d": 60 * 60 * 24,
@@ -35,24 +46,33 @@ HORIZON_TIME_ABBREVIATIONS = MappingProxyType(
 )
 
 
-def datetime_from_horizons_epochs(start, stop, step):
-    return {"start": dtp.parse(start), "stop": dtp.parse(stop), "step": step}
-
-
-def chunk_time(epochs, chunksize):
-    horizons_dt = datetime_from_horizons_epochs(**epochs)
+def chunk_time(epochs: MutableMapping, chunksize: int) -> list[dict]:
+    """
+    chunk time into a series of intervals that will return at most chunksize
+    lines from Horizons.
+    """
+    horizons_dt = datetime_from_horizon_epochs(**epochs)
+    # interpret stepsize-with-units as time and use it to calculate number of
+    # lines in requested interval
+    if horizons_dt["step"][-1].isalpha():
+        seconds_per_step = HORIZON_TIME_ABBREVIATIONS[
+            horizons_dt["step"][-1]
+        ] * int(horizons_dt["step"][:-1])
+        lines = estimate_line_count(horizons_dt, seconds_per_step)
+    # interpret stepsize-without-units as number of lines in requested
+    # interval and use it to calculate stepsize in time
+    else:
+        lines = horizons_dt["step"]
+        seconds_per_step = (
+            horizons_dt["stop"] - horizons_dt["start"]
+        ).total_seconds() / lines
+    # chunk interval into as many sub-intervals as necessary
+    chunks = tuple(chunked(range(lines), chunksize))
+    # divide unitless steps by number of chunks
     if not horizons_dt["step"][-1].isalpha():
-        raise ValueError(
-            "times passed to this function must include an explicit time unit: "
-            "s, m, h, d, y"
-        )
-    seconds_per_step = HORIZON_TIME_ABBREVIATIONS[
-        horizons_dt["step"][-1]
-    ] * int(horizons_dt["step"][:-1])
-    chunks = chunked(
-        range(estimate_line_count(horizons_dt, seconds_per_step)), chunksize
-    )
+        horizons_dt["step"] = math.ceil(int(horizons_dt["step"]) / len(chunks))
     times = []
+    # set specific time bounds of queries and return them
     for chunk in chunks:
         start = horizons_dt["start"] + dt.timedelta(
             seconds=seconds_per_step * chunk[0]
@@ -70,27 +90,36 @@ def chunk_time(epochs, chunksize):
     return times
 
 
+def datetime_from_horizon_epochs(start: str, stop: str, step: Union[int, str]):
+    """convert horizon epoch dict to datetime to estimate response length."""
+    return {"start": dtp.parse(start), "stop": dtp.parse(stop), "step": step}
+
+
 def construct_lhorizon_list(
-    target,
-    origin,
-    epochs,
-    query_type="OBSERVER",
+    epochs: MutableMapping,
+    target: Union[int, str, MutableMapping] = "301",
+    origin: Union[int, str, MutableMapping] = "500@399",
+    session: Optional[requests.Session] = None,
+    query_type: str = "OBSERVER",
+    query_options: Optional[Mapping] = None,
     chunksize=85000,
-    id_type="majorbody",
-    query_options=None,
-):
+) -> list[LHorizon]:
     """
+    construct a list of LHorizons from a query. Intended for queries that will
+    return over 90000 lines, which is currently the hard limit of the Horizons
+    CGI. this function takes most of the same arguments as LHorizon, but
+    epochs must be specified as a dictionary with times in ISO format.
     this function does not support chunking long lists of explicitly-defined
-    individual epochs. queries of this type are extremely inefficient for
-    the Horizons backend and delivering many of them in quick succession
-    typically causes it to tightly throttle the requester.
+    individual epochs. queries of this type are extremely inefficient for the
+    Horizons backend and delivering many of them in quick succession typically
+    causes it to tightly throttle the requester.
     """
     return [
         LHorizon(
             target,
             origin,
-            id_type=id_type,
             query_type=query_type,
+            session=session,
             epochs=chunk,
             query_options=query_options,
         )
@@ -98,59 +127,62 @@ def construct_lhorizon_list(
     ]
 
 
-def query_all_lhorizons(lhorizons, delay_between=2, delay_retry=8):
+def query_all_lhorizons(
+    lhorizons: Sequence[LHorizon], delay_between=2, delay_retry=8
+):
     """
-    TODO, maybe: add an attractive progress bar of some type
+    queries all LHorizons in a passed sequence of LHorizons using a shared
+    session, carefully closing sockets and pausing between them, regenerating
+    session and pausing for a longer interval if JPL Horizons rejects a query
     """
+    # TODO, maybe: add an attractive progress bar of some type
     session = default_lhorizon_session()
     for ix, lhorizon in enumerate(lhorizons):
         lhorizon.session = session
-        lhorizon.prepare_request(**lhorizon.query_options)
-        print(
-            "querying Horizons for LHorizon "
-            + str(ix + 1)
-            + " of "
-            + str(len(lhorizons))
+        lhorizon.prepare_request()
+        logging.info(
+            "querying Horizons for LHorizon {} of {}".format(
+                str(ix + 1), str(len(lhorizons))
+            )
         )
         lhorizon.query()
-        # lhorizon = partial_lhorizon(session=session)
         while lhorizon.response.status_code != 200:
-            print(
-                "response code "
-                + str(lhorizon.response.status_code)
-                + ", pausing before re-request"
+            logging.info(
+                "response code {}, pausing before re-request".format(
+                    str(lhorizon.response.status_code)
+                )
             )
             lhorizon.session.close()
             time.sleep(delay_retry)
-            print("retrying request")
+            logging.info("retrying request")
             session = default_lhorizon_session()
             lhorizon.session = default_lhorizon_session()
             lhorizon.prepare_request()
             lhorizon.query(refetch=True)
-        print(
-            "collected data from "
-            + lhorizon.epochs["start"]
-            + " to "
-            + lhorizon.epochs["stop"]
+        logging.info(
+            "collected data from {} to {}".format(
+                lhorizon.epochs["start"], lhorizon.epochs["stop"]
+            )
         )
         # pausing for politeness
         if ix != len(lhorizons) - 1:
-            print("pausing before next request")
+            logging.info("pausing before next request")
             time.sleep(delay_between)
 
 
-def list_sites(center_body=399):
-    """make a pandas dataframe from a raw horizon response."""
+def list_sites(center_body: int = 399) -> pd.DataFrame:
+    """
+    query Horizons for all named sites recognized on the specified body and
+    format this response as a DataFrame. if no body is specified, uses Earth
+    (399).
+    """
     # the choice of '500' is totally arbitrary -- Horizons just dooesn't have
     # a generalized 'search' command; you must give it some arbitrary table
     # request along with a center string it will interpret as a search
     response = requests.get(
         "https://ssd.jpl.nasa.gov/horizons_batch.cgi?batch=1&COMMAND=500"
-        "&CENTER=%22*@{}%22&CSV_FORMAT=YES".format(
-            str(center_body)
-        )
+        "&CENTER=%22*@{}%22&CSV_FORMAT=YES".format(str(center_body))
     )
-
     observatory_header_regex = re.compile(r".*Observatory Name.*\n")
     observatory_data_regex = re.compile(r"(?<=------\n)(.|\n)*?(?=Multiple)")
     column_text = re.search(observatory_header_regex, response.text).group(0)
@@ -170,12 +202,16 @@ def list_sites(center_body=399):
         columns={"#": "id"}
     )
 
-def list_majorbodies():
+
+def list_majorbodies() -> pd.DataFrame:
+    """
+    query Horizons for all currently-recognized major bodies and format the
+    response into a DataFrame.
+    """
     response = requests.get(
         "https://ssd.jpl.nasa.gov/horizons_batch.cgi?batch=1&COMMAND=MB"
         "&CSV_FORMAT=%22YES%22 "
     )
-
     majorbody_data_regex = re.compile(r"(?<=---- \n) +(.|\n)*?(?=Number)")
     data_text = re.search(majorbody_data_regex, response.text).group(0)
     data_values = []
@@ -183,81 +219,11 @@ def list_majorbodies():
         strip = re.sub(" +", " ", line.strip())
         split = re.split(" +", strip, maxsplit=1)
         data_values.append(split)
-    return pd.DataFrame(data_values, columns= ["id", "name"]).dropna(axis=0)
+    return pd.DataFrame(data_values, columns=["id", "name"]).dropna(axis=0)
 
-#
-# def get_lhorizon_moon(
-#     lunar_coords,
-#     time_series,
-#     observer_location=-1,
-#     query_options=None,
-#     session=None,
-# ):
-#     """
-#     TODO: cut or improve
-#
-#     convenience method. gets lunar ephemerides from Horizons for arbitrary
-#     selenographic
-#     coordinates, observer location, and input time series. unlike
-#     get_horizon_moon_list(), this uses JPL Horizons' bulk epoch functionality
-#     to get ephemerides at many times in a single response. this is much, much
-#     faster, because JPL Horizons hates receiving hundreds of separate queries
-#     in quick succession. however, has the downside that it evenly spaces the
-#     sampled times across the interval defined by the time series, so there may
-#     be quantization errors if the series is also not evenly spaced. JPL
-#     will also reject epochs that space samples by fewer than 0.5 seconds.
-#     """
-#
-#     if query_options is None:
-#         query_options = {}
-#
-#     # format the selenographic position coordinate for horizons
-#     # 301 is horizons code for the moon
-#     # g: latitude, longitude, elevation is the prefix for planetodetic coords
-#     # @ is the separator between coordinates and body
-#     if lunar_coords is not None:
-#         lunar_location = "g: " + str(lunar_coords)[1:-1] + " @ 301"
-#     else:
-#         lunar_location = "301"
-#
-#     # format time parameters for horizons:
-#     # start / stop are beginning and end as y-m-d h:m:s:mmm
-#     # step is number of samples, evenly spaced
-#
-#     epochs = {
-#         "start": time_series[0],
-#         "stop": time_series[len(time_series) - 1],
-#         "step": str(len(time_series) - 1),
-#     }
-#
-#     moon = LHorizon(
-#         target_id=lunar_location,
-#         id_type="id",
-#         origin=observer_location,
-#         epochs=epochs,
-#         session=session,
-#     )
-#     moon.query(**query_options)
-#
-#     return moon.pointing()
-#
-#
-#
-# def fetch_bulk_generic(bulk_horizon_query):
-#     for horizon_query in bulk_horizon_query:
-#         horizon_query.query()
-#         print(
-#             "collected data from "
-#             + horizon_query.epochs["start"]
-#             + " to "
-#             + horizon_query.epochs["stop"]
-#         )
-#     print("concatenating all data")
-#     return pd.concat(
-#         [horizon_query.table() for horizon_query in bulk_horizon_query]
-#     )
-#
-#
+
+# TODO: de-deprecate this
+
 # def moon_phase(moontime):
 #     """
 #     Time (in any astropy.time-parseable format) -> float giving moon phase in

@@ -1,3 +1,5 @@
+"""utilities for `lhorizons` tests"""
+
 import json
 
 import numpy as np

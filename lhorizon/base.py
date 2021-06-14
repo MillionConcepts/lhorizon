@@ -78,14 +78,15 @@ class LHorizon:
         epochs : dict[str, str] or Sequence[str, float, dt.datetime], optional
             Either a scalar in any astropy.time - parsable format,
             a list of epochs in jd, iso, or dt format, or a dict
-            defining a range of times and dates. Timescale is UTC. If no
-            epochs are provided, the current time is used. Scalars or range
-            dictionaries are preferred over lists, as they tend to be
-            processed more easily by Horizons. The range dictionary format is:
+            defining a range of times and dates. Timescale is UTC for OBSERVER
+            queries and TDB for VECTORS queries. If no epochs are provided,
+            the current time is used. Scalars or range dictionaries are
+            preferred over lists, as they tend to be processed more easily by
+            Horizons. The range dictionary format is:
             {
                 ``'start'``:'YYYY-MM-DD [HH:MM:SS.fff]',
                 ``'stop'``:'YYYY-MM-DD [HH:MM:SS.fff]',
-                ``'step'``:'n[y|d|m]'
+                ``'step'``:'n[y|d|h|m]'
             }
             If no units are provided for step, Horizons evenly divides the
             period between start and stop into n intervals.
