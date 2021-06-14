@@ -1,5 +1,6 @@
-import warnings
 from itertools import repeat
+from typing import Union
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -75,23 +76,24 @@ def array_reference_shift(
 class Targeter:
     def __init__(
         self,
-        target,
+        target: Union[LHorizon, pd.DataFrame],
         solutions=None,
         target_radius=None,
     ):
         """
-        @param target: LHorizon instance or dataframe; if a dataframe, must
+        target: LHorizon instance or dataframe; if a dataframe, must
             have columns named 'ra, dec, dist', 'az, alt, dist', or 'x, y, z'
             if the LHorizon instance is an OBSERVER query, uses ra_app_icrf
             and dec_app_icrf, if VECTORS, uses x/y/z
-        @param solutions: solutions: mapping of
-        functions that each accept six args -- x1, y1, z1, x2, y2, z2 -- and
-        return at least x, y, z position of an "intersection" (however
-        defined). for compatibility with other functions in this module,
-        should return NaN values for cases in which no intersection is
-        found. if this parameter is not passed, generates ray-sphere
-        solutions from the passed target radius.
-        @param target_radius: used only if no intersection solutions are
+
+        solutions: mapping of functions that each accept six args -- x1, y1,
+            z1, x2, y2, z2 -- and return at least x, y, z position of an
+            "intersection" (however defined). for compatibility with other
+            functions in this module, should return NaN values for cases in
+            which no intersection is found. if this parameter is not passed,
+            generates ray-sphere solutions from the passed target radius.
+
+        target_radius: used only if no intersection solutions are
             passed; generates a system of ray-sphere intersection solutions for
             a target body of this radius.
         """

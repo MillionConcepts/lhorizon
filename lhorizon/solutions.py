@@ -1,3 +1,10 @@
+"""
+functionality for solving body-intersection problems. used by
+`lhorizon.targeter`. currently contains only ray-sphere intersection solutions
+but could also sensibly contain expressions for bodies of different shapes.
+"""
+from collections.abc import Callable, Sequence
+
 import sympy as sp
 
 # sympy symbols for ray-sphere equations
@@ -6,7 +13,7 @@ x, y, z, x0, y0, z0, mx, my, mz, d = sp.symbols(
 )
 
 
-def ray_sphere_equations(radius):
+def ray_sphere_equations(radius: float) -> list[sp.Eq]:
     """
     simple system of equations for intersections between:
     a ray with origin at (0, 0, 0) and direction vector [x, y, z]
@@ -21,9 +28,17 @@ def ray_sphere_equations(radius):
     return [x_constraint, y_constraint, z_constraint, sphere_bound_constraint]
 
 
-def get_ray_sphere_solution(radius, farside=False):
-    # by default we take the nearside solution, which sp.solve()
-    # returns first in the list
+def get_ray_sphere_solution(
+    radius: float, farside: bool = False
+) -> tuple[sp.Expr]:
+    """
+    produce a solution to the generalized ray-sphere equation for a body of
+    radius `radius`. by default, take the nearside solution. this produces a
+    tuple of sympy expressions objects, which are fairly slow to evaluate;
+    unless you are planning to further manipulate them, you would probably
+    rather call make_ray_sphere_lambdas().
+    """
+    # sp.solve() returns the nearside solution first
     selected_solution = 0
     if farside:
         selected_solution = 1
@@ -33,24 +48,29 @@ def get_ray_sphere_solution(radius, farside=False):
     return general_solution
 
 
-def make_ray_sphere_lambdas(radius, farside=False):
-    return lambdify_system(
-        get_ray_sphere_solution(radius, farside),
-        ["x", "y", "z", "d"],
-        [x0, y0, z0, mx, my, mz],
-    )
-
-
-def lambdify_system(expressions, expression_names, variables):
+def lambdify_system(
+    expressions: Sequence[sp.Expr],
+    expression_names: Sequence[str],
+    variables: Sequence[sp.Symbol],
+) -> dict[str, Callable]:
     """
-    list of sympy expressions, list of strings, list of sympy symbols
-        -> dict of numpy lambda functions
-    returns a dict of numpy functions that substitute the symbols
-    in 'variables' into the expressions in 'expressions'.
-    'expression_names' serve as the keys of the dict.
+    returns a dict of functions that substitute the symbols in 'variables'
+    into the expressions in 'expressions'. 'expression_names' serve as the
+    keys of the dict.
     """
     return {
         expression_name: sp.lambdify(variables, expression, "numpy")
         for expression, expression_name in zip(expressions, expression_names)
     }
 
+
+def make_ray_sphere_lambdas(radius: float, farside=False):
+    """
+    produce a dict of functions that return solutions for the ray-sphere
+    equation for a sphere of radius `radius`.
+    """
+    return lambdify_system(
+        get_ray_sphere_solution(radius, farside),
+        ["x", "y", "z", "d"],
+        [x0, y0, z0, mx, my, mz],
+    )

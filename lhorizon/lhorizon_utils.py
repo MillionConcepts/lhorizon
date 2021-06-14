@@ -5,6 +5,7 @@ from operator import or_
 from typing import Any, Optional, Pattern, Union
 
 import astropy.time as at
+import dateutil.parser as dtp
 import numpy as np
 import pandas as pd
 import pandas.api.types
@@ -75,22 +76,22 @@ def convert_to_jd(epochs: Sequence) -> list[float]:
     to 1960 due to some astropy.Time corner cases involving leap seconds.
     """
     epochs = listify(epochs)
-    # astropy uses a nonstandard iso format with no T separator
-    if isinstance(epochs[0], str):
-        if "T" in epochs[0]:
-            epochs = [epoch.replace("T", " ") for epoch in epochs]
+    # # astropy uses a nonstandard iso format with no T separator
+    # if isinstance(epochs[0], str):
+    #     if "T" in epochs[0]:
+    #         epochs = [epoch.replace("T", " ") for epoch in epochs]
     # coerce iterable / scalar iso or dt inputs to jd
-    is_not_jd = True
-    formats = ["jd", "iso", "datetime"]
-    while is_not_jd:
-        try:
-            form = formats.pop()
-            epochs = at.Time(epochs, format=form).jd
-            is_not_jd = False
-        except (ValueError, TypeError, ArithmeticError) as ex:
-            if len(formats) == 0:
-                raise ex
-    return epochs
+    scale = "utc"
+    try:
+        parsed_epochs = [float(epoch) for epoch in epochs]
+        at_format = "jd"
+    except ValueError:
+        parsed_epochs = [dtp.parse(epoch) for epoch in epochs]
+        utc_cutoff = dtp.parse("1960-01-01")
+        if any([epoch < utc_cutoff for epoch in parsed_epochs]):
+            scale = "tai"
+        at_format = "datetime"
+    return at.Time(parsed_epochs, format=at_format, scale=scale).jd
 
 
 def numeric_columns(data: pd.DataFrame) -> list[str]:
@@ -140,7 +141,10 @@ def sph2cart(
     y0 = radius * np.cos(lat) * np.sin(lon)
     z0 = radius * np.sin(lat)
 
-    if reduce(or_, map(is_it(Sequence), [lat, lon, radius])):
+    if reduce(
+        or_,
+        map(is_it(pd.DataFrame, np.ndarray, pd.Series), [lat, lon, radius]),
+    ):
         return pd.DataFrame({"x": x0, "y": y0, "z": z0})
     return x0, y0, z0
 
@@ -162,7 +166,9 @@ def cart2sph(
     if unit == "degrees":
         latitude = np.degrees(latitude)
         longitude = np.degrees(longitude)
-    if reduce(or_, map(is_it(Sequence), [x0, y0, z0])):
+    if reduce(
+        or_, map(is_it(pd.DataFrame, np.ndarray, pd.Series), [x0, y0, z0])
+    ):
         return pd.DataFrame({"lat": latitude, "lon": longitude, "r": radius})
     return latitude, longitude, radius
 

@@ -1,4 +1,4 @@
-"""utilities for `lhorizons` tests"""
+"""utilities for `lhorizon` tests"""
 
 import json
 

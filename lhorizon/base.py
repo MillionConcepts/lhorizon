@@ -8,9 +8,9 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Union, Optional
 import warnings
 
+import astropy.time as at
 import pandas as pd
 import requests
-from astropy.time import Time
 
 import lhorizon.config as config
 from lhorizon._response_parsers import (
@@ -38,7 +38,7 @@ class LHorizon:
         self,
         target: Union[int, str, MutableMapping] = "301",
         origin: Union[int, str, MutableMapping] = "500@399",
-        epochs: Optional[Union[str, float, Mapping]] = None,
+        epochs: Optional[Union[str, float, Sequence[float], Mapping]] = None,
         session: Optional[requests.Session] = None,
         query_type: str = "OBSERVER",
         allow_long_queries: bool = False,
@@ -288,7 +288,7 @@ class LHorizon:
         by __init__
         """
         if epochs is None:
-            return Time.now().jd
+            return at.Time.now().jd
         if isinstance(epochs, Mapping):
             if not (
                 "start" in epochs and "stop" in epochs and "step" in epochs

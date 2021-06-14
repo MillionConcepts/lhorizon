@@ -85,13 +85,13 @@ TEST_CASES = {
         },
         "request_url": "https://ssd.jpl.nasa.gov/horizons_batch.cgi?batch=1"
                        "&TABLE_TYPE=OBSERVER&QUANTITIES=%271%2C2%2C4%2C13"
-                       "%2C14%2C15%2C17%2C20%2C45%27&COMMAND=%22301%22"
-                       "&SOLAR_ELONG=%221%2C99%22&LHA_CUTOFF=1&CSV_FORMAT"
-                       "=YES&CAL_FORMAT=BOTH&ANG_FORMAT=DEG&APPARENT"
-                       "=REFRACTED&REF_SYSTEM=J2000&EXTRA_PREC=YES&CENTER"
-                       "=%27500%40399%27&ANG_RATE_CUTOFF=5000&START_TIME"
-                       "=%221991-01-01%22&STOP_TIME=%221991-01-10%22"
-                       "&STEP_SIZE=%226h%22&AIRMASS=80&SKIP_DAYLT=YES",
+                       "%2C14%2C15%2C17%2C20%2C45%27&COMMAND=%22301+CAP%3B"
+                       "+NOFRAG%3B%22&SOLAR_ELONG=%221%2C99%22&LHA_CUTOFF=1"
+                       "&CSV_FORMAT=YES&CAL_FORMAT=BOTH&ANG_FORMAT=DEG"
+                       "&APPARENT=REFRACTED&REF_SYSTEM=J2000&EXTRA_PREC=YES"
+                       "&CENTER=%27500%40399%27&ANG_RATE_CUTOFF=5000"
+                       "&START_TIME=%221991-01-01%22&STOP_TIME=%221991-01-10"
+                       "%22&STEP_SIZE=%226h%22&AIRMASS=80&SKIP_DAYLT=YES",
     },
     # a favorite of Michael Mommert
     "CERES_2000": {

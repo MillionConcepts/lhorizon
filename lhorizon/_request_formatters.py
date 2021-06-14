@@ -1,7 +1,7 @@
 """
 formatters to translate various parameters and options into URL parameters
 that can be parsed by JPL Horizons' CGI. These are mostly intended to be used
-by LHorizons and should probably not be called directly.
+by LHorizon methods and should probably not be called directly.
 """
 
 from collections.abc import Mapping, Sequence
@@ -78,7 +78,7 @@ def assemble_request_params(
     quantities: str,
     refraction: bool,
     refsystem: str,
-    solar_elongation: tuple[int],
+    solar_elongation: Sequence[int],
 ) -> dict[str]:
     """final-stage assembler for Horizons CGI URL parameters"""
     return {

@@ -1,3 +1,9 @@
+"""
+helper functions for parsing response text from the JPL Horizons CGI.
+these functions are intended to be called by LHorizon methods and should
+generally not be called directly.
+"""
+
 import re
 from io import StringIO
 from typing import Optional
@@ -24,7 +30,6 @@ def make_lhorizon_dataframe(
     horizon_data_search = re.compile(
         r"(?<=\$\$SOE\n)(.|\n)*?(\d\d\d\d(.|\n)*)(?=\$\$EOE)"
     )
-
     # grab these sections and write them into a string buffer
     try:
         columns = re.search(horizon_column_search, jpl_response)[0]
@@ -37,7 +42,6 @@ def make_lhorizon_dataframe(
     data_buffer = StringIO()
     data_buffer.write(columns + "\n" + data)
     data_buffer.seek(0)
-
     # read this buffer as csv
     horizon_dataframe = pd.read_csv(data_buffer, sep=" *, *", engine="python")
     # name the unlabeled flag columns
@@ -60,7 +64,6 @@ def make_lhorizon_dataframe(
         horizon_dataframe["geo_lon"] = target_geodetic_coords[0]
         horizon_dataframe["geo_lat"] = target_geodetic_coords[1]
         horizon_dataframe["geo_el"] = target_geodetic_coords[2]
-
     # drop empty columns and return
     return horizon_dataframe.dropna(axis=1)
 
@@ -97,7 +100,6 @@ def clean_up_observer_series(
         except ValueError:
             # generally random spaces added after a minus sign
             return series.str.replace(" ", "").astype(np.float64)
-
     if pattern == "delta":
         au_to_m = (1 * u.au).to(u.m).value
         return pd.Series(

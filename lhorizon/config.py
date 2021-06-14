@@ -1,7 +1,7 @@
-"""configuration options for lhorizon"""
+"""configuration options for `lhorizon`"""
 
 
-# default Horizons columns
+# default Horizons QUANTITIES columns
 OBSERVER_QUANTITIES = "1,2,4,13,14,15,17,20,45"
 VECTORS_QUANTITIES = "3"
 # timeout for connecting to jpl server
@@ -64,16 +64,5 @@ TABLE_PATTERNS = {
         "geo_el": "geo_el",
     },
 }
-
-
-KNOWN_ID_TYPES = (
-    "smallbody",
-    "majorbody",
-    "designation",
-    "name",
-    "asteroid_name",
-    "comet_name",
-    "id",
-)
 
 KNOWN_QUERY_TYPES = ("OBSERVER", "VECTORS", "ELEMENTS")
