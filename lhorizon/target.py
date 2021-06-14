@@ -1,26 +1,42 @@
+from collections.abc import Callable, Mapping, Sequence
 from itertools import repeat
-from typing import Union
+from typing import Optional, Union
 import warnings
 
 import numpy as np
 import pandas as pd
 import spiceypy as spice
+from numpy.typing import ArrayLike
 
 from lhorizon import LHorizon
 from lhorizon.lhorizon_utils import sph2cart, hats, utc_to_et
 from lhorizon.solutions import make_ray_sphere_lambdas
 
 
-def find_intersection(solutions, ray_direction, target_center):
+def find_intersections(
+    solutions: Mapping[Callable],
+    ray_direction: ArrayLike,
+    target_center: ArrayLike,
+) -> dict:
+    """
+    find intersections between ray_direction and target_center given a mapping
+    of functions (output of solutions.make_ray_sphere_lambdas(), for instance)
+    """
     # suppress irrelevant warnings about imaginary values
-    return {
-        coordinate: solution(*ray_direction, *target_center)
-        for coordinate, solution in solutions.items()
-    }
+    with warnings.catch_warnings:
+        warnings.simplefilter("ignore")
+        return {
+            coordinate: solution(*ray_direction, *target_center)
+            for coordinate, solution in solutions.items()
+        }
 
 
 def array_reference_shift(
-    positions, time_series, origin, destination, wide=False
+    positions: ArrayLike,
+    time_series: Sequence,
+    origin: str,
+    destination: str,
+    wide: bool = False,
 ):
     """
     using SPICE, transform an array of position vectors from origin (frame) to
@@ -54,31 +70,13 @@ def array_reference_shift(
     except ValueError:
         return ValueError
 
-    # @param intersection_solver: function that, given
-    # target_shape_properties as kwargs, must return a mapping of functions
-    # that each accept six args -- x1, y1, z1, x2, y2, z2 -- and return at
-    # least x, y, z position of an "intersection" (however defined). for
-    # compatibility with other functions in this module, should return NaN
-    # values for cases in which no intersection is found.
-
-    # solutions = intersection_solver(**target_shape_properties)
-    # @param target_shape_properties: any target shape properties (radius,
-    #     obliquity, etc.) required by the solver
-
-
-#         @param target_centers: vectors giving locations of target center
-#             relative to origin
-#         @param direction_vectors: vectors giving directions of rays from
-#         origin
-#             (perhaps boresight pointings, etc.)
-
 
 class Targeter:
     def __init__(
         self,
         target: Union[LHorizon, pd.DataFrame],
-        solutions=None,
-        target_radius=None,
+        solutions: Mapping[Callable] = None,
+        target_radius: Optional[float] = None,
     ):
         """
         target: LHorizon instance or dataframe; if a dataframe, must
@@ -112,7 +110,12 @@ class Targeter:
             )
 
     @staticmethod
-    def _coerce_df_cartesian(target):
+    def _coerce_df_cartesian(target: pd.DataFrame) -> pd.DataFrame:
+        """
+        attempt to produce a dataframe in cartesian coordinates from any
+        passed dataframe, inferring the character of spherical coordinates
+        from column names. generally should not be called directly.
+        """
         if {"x", "y", "z"}.issubset(set(target.columns)):
             return target
         else:
@@ -135,7 +138,13 @@ class Targeter:
         )
 
     @staticmethod
-    def _check_solution_arguments(solutions, target_radius):
+    def _check_solution_arguments(
+        solutions: Optional[Mapping[Callable]], target_radius: Optional[float]
+    ):
+        """
+        make ray-sphere lambdas if no solutions are passed, or raise an error,
+        or accept solutions.
+        """
         if (solutions is None) and (target_radius is None):
             raise ValueError(
                 "this function requires either an explicit system of "
@@ -147,7 +156,8 @@ class Targeter:
         return solutions
 
     @staticmethod
-    def _coerce_lhorizon_cartesian(target):
+    def _coerce_lhorizon_cartesian(target: LHorizon) -> pd.DataFrame:
+        """produce a DataFrame of cartesian coordinates from a LHorizon"""
         table = target.table()
         if target.query_type == "VECTORS":
             return table
@@ -163,17 +173,22 @@ class Targeter:
             "as a basis for a Targeter."
         )
 
-    def find_targets(self, pointings):
+    def find_targets(self, pointings: Union[pd.DataFrame, LHorizon]) -> None:
         """
-        note that target center vector and pointing vectors must be in the same
-        frame of reference (source_frame) or downstream results will be silly.
+        find targets using pointing vectors in a passed dataframe or lhorizon.
+        time series must match time series in body ephemeris. stores passed
+        pointings in self.ephemerides['pointing'] and solutions in
+        self.ephemerides['topocentric']
+
+        note that target center vectors and pointing vectors must be in the
+        same frame of reference or downstream results will be silly.
 
         if you pass it a set of pointings without a time field, it will assume
-        that their time field is identical to the time field of the target
-        ephemeris.
+        that their time field is identical to the time field of
+        self.ephemerides["body"].
 
         unless you do something extremely fancy in the solver,
-        the _intersections_ will be 'geometric' quantities and thus reintroduce
+        the intersections will be 'geometric' quantities and thus reintroduce
         some error due to light-time, rotation, aberration, etc. between target
         body surface and target body center -- but considerably less error than
         if you don't have a corrected vector from origin to target body center.
@@ -186,7 +201,15 @@ class Targeter:
             )
         self.ephemerides["pointing"] = pointing_ephemeris
 
-    def find_target_grid(self, raveled_meshgrid):
+    def find_target_grid(self, raveled_meshgrid: pd.DataFrame) -> None:
+        """
+        finds targets at a single moment in time for a grid of coordinates
+        expressed as an output of lhorizon_utils.make_raveled_meshgrid().
+        stores them in self.ephemerides["topocentric"] and the raveled meshgrid
+        in self.ephemerides["pointing"].
+
+        all non-time-releated caveats from Targeter.find_targets() apply.
+        """
         if not isinstance(raveled_meshgrid, pd.DataFrame):
             raise ValueError("find_target_grid() must be passed a DataFrame.")
         if len(self.ephemerides["body"]) != 1:
@@ -204,6 +227,10 @@ class Targeter:
         self.ephemerides["pointing"] = pointings
 
     def _calculate_intersections(self, pointing_ephemeris, wide=False):
+        """
+        calculate intersections. called by target-finding functions. should
+        not be called directly
+        """
         # breaking these out beforehand is a performance step to avoid
         # slicing every row on very large ephemerides, which can be
         # surprisingly expensive in some cases
@@ -222,6 +249,11 @@ class Targeter:
     def transform_targets_to_body_frame(
         self, source_frame="j2000", target_frame="j2000"
     ):
+        """
+        transform targets from source_frame to body_frame. you must initialize
+        self.ephemerides["topocentric"] using find_targets() or
+        find_target_grid() before calling this function.
+        """
         if self.ephemerides.get("topocentric") is None:
             raise ValueError(
                 "Please initialize topocentric targets with find_targets() "
@@ -261,8 +293,14 @@ class Targeter:
         )
         self.ephemerides["bodycentric"] = body_to_target_vectors
 
-    def make_intersection_row(self, ix, pointing_row, body_row):
-        intersection = find_intersection(
+    def _make_intersection_row(
+        self, ix: int, pointing_row: pd.Series, body_row: pd.Series
+    ):
+        """
+        make a clearly-labeled row of intersections. should not be called
+        directly.
+        """
+        intersection = find_intersections(
             self.solutions,
             pointing_row[["x", "y", "z"]],
             body_row[["x", "y", "z"]],
@@ -270,7 +308,13 @@ class Targeter:
         intersection["ix"] = ix
         return intersection
 
-    def _coerce_pointing_ephemeris(self, pointings):
+    def _coerce_pointing_ephemeris(
+        self, pointings: Union[pd.DataFrame, LHorizon]
+    ):
+        """
+        coerce a pointing ephemeris to a tractable format. should not be
+        called directly.
+        """
         if isinstance(pointings, LHorizon):
             pointing_ephemeris = self._coerce_lhorizon_cartesian(pointings)
         elif isinstance(pointings, pd.DataFrame):
