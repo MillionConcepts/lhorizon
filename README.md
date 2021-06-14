@@ -19,9 +19,7 @@ complete test coverage.
 
 ## cautions
 
-Examples are in flux and should not be used; updated versions are forthcoming shortly.
-
 This module only officially supports observer / ephemeris and vector Horizons queries. Osculating elements queries are 
 not officially supported and may behave in unexpected ways.
 
-This software is in early alpha stage. Bugs are expected; please report them. 
+Some functions may produce warnings and / or offsets by a handful of seconds for dates prior to 1960.
