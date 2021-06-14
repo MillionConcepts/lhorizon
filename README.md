@@ -13,9 +13,16 @@ process I extended it to implement a more efficient parser, add support for fast
 pandas dataframes rather than astropy tables (they are very powerful, but too slow for the applications I wrote this 
 for).
 
-This is a prerelease of lhorizons 1.0, which completes and rationalizes the interface, adds a submodule for figuring 
+This is a prerelease of `lhorizon` 1.0, which completes and rationalizes the interface, adds a submodule for figuring 
 out, in target-body-centric coordinates, what part of a solar system body something is pointing at, and adds reasonably 
 complete test coverage.
+
+
+## pronunciation
+
+along the lines of "l'horizon" or "low-ree-zahn;" like "the horizon" in French, or L'Horizon, the famous Palm Springs
+Desert Modern hotel (an easy drive from Pasadena)
+
 
 ## cautions
 
