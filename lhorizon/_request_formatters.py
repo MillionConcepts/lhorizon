@@ -33,15 +33,18 @@ def format_epoch_params(epochs):
             or "step" not in epochs
         ):
             raise ValueError("'epochs' must contain start, " + "stop, step")
-        epoch_payload["START_TIME"] = (
-            '"' + epochs["start"].replace("'", "") + '"'
-        )
-        epoch_payload["STOP_TIME"] = (
-            '"' + epochs["stop"].replace("'", "") + '"'
-        )
-        epoch_payload["STEP_SIZE"] = (
-            '"' + epochs["step"].replace("'", "") + '"'
-        )
+        # epoch_payload["START_TIME"] = (
+        #     '"' + epochs["start"].replace("'", "") + '"'
+        # )
+        # epoch_payload["STOP_TIME"] = (
+        #     '"' + epochs["stop"].replace("'", "") + '"'
+        # )
+        # epoch_payload["STEP_SIZE"] = (
+        #     '"' + epochs["step"].replace("'", "") + '"'
+        # )
+        epoch_payload["START_TIME"] = '"' + str(epochs["start"]) + '"'
+        epoch_payload["STOP_TIME"] = '"' + str(epochs["stop"]) + '"'
+        epoch_payload["STEP_SIZE"] = '"' + str(epochs["step"]) + '"'
     else:
         # treat epochs as scalar
         epoch_payload["TLIST"] = str(epochs)

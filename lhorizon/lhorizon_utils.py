@@ -8,7 +8,10 @@ import astropy.time as at
 import numpy as np
 import pandas as pd
 import pandas.api.types
+import requests
 from numpy.linalg import norm
+
+from lhorizon import config as config
 
 
 def listify(thing: Any) -> list:
@@ -141,3 +144,10 @@ def make_raveled_meshgrid(axes, axis_names):
         axis_names[ix]: np.ravel(grid) for ix, grid in enumerate(meshgrid)
     }
     return pd.DataFrame(grids | indices)
+
+
+def default_lhorizon_session():
+    session = requests.Session()
+    session.headers = config.DEFAULT_HEADERS
+    session.stream = False
+    return session

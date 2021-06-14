@@ -29,14 +29,7 @@ from lhorizon._request_formatters import (
     format_geodetic_origin,
 )
 
-from lhorizon.lhorizon_utils import convert_to_jd
-
-
-def default_lhorizon_session():
-    session = requests.Session()
-    session.stream = True
-    session.headers = config.DEFAULT_HEADERS
-    return session
+from lhorizon.lhorizon_utils import convert_to_jd, default_lhorizon_session
 
 
 class LHorizon:
@@ -93,9 +86,7 @@ class LHorizon:
             closest match under any id_type), default: ``'smallbody'``
         session: requests.Session, optional
             session object for optimizing API calls. A new session is generated
-            if one is not passed. 'Stream' parameter is always forced to True
-            due to apparent issues (as of June 2021) with Horizons SSL socket
-            handling.
+            if one is not passed.
         allow_long_queries: bool, optional
             if True, allows long (>2000 character) URLs to be used to query
             JPL Horizons. These will often be truncated serverside, resulting
@@ -127,7 +118,6 @@ class LHorizon:
         self.id_type = id_type
         if session is None:
             session = default_lhorizon_session()
-        session.stream = True
         self.session = session
         self.response = None
         self.request = None
@@ -135,7 +125,7 @@ class LHorizon:
         if query_options is None:
             query_options = {}
         self.query_options = query_options
-        self._prepare_request(**self.query_options)
+        self.prepare_request(**self.query_options)
 
     # TODO: determine if these might be nicer as properties
     def dataframe(self):
@@ -180,7 +170,7 @@ class LHorizon:
                 self.request, timeout=config.TIMEOUT
             )
 
-    def _prepare_request(
+    def prepare_request(
         self,
         airmass_lessthan=99,
         solar_elongation=(0, 180),

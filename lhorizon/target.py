@@ -114,6 +114,8 @@ class Targeter:
         if {"x", "y", "z"}.issubset(set(target.columns)):
             return target
         else:
+            if "dist" not in target.columns:
+                target["dist"] = 1
             for lat, lon, radius in (
                 ("dec_app_icrf", "ra_app_icrf", "dist"),
                 ("dec", "ra", "dist"),
@@ -125,8 +127,9 @@ class Targeter:
                     )
                     return pd.concat([coordinates, target], axis=1)
         raise ValueError(
-            "a passed dataframe must have columns named 'dec, ra, dist', "
-            "'alt, az, dist', 'dec_app_icrf, ra_app_icrf, dist', or 'x, y, z'"
+            "a passed dataframe must have columns named 'dec, ra', "
+            "'alt, az', 'dec_app_icrf, ra_app_icrf' (and optionally 'dist'), "
+            "or 'x, y, z'"
         )
 
     @staticmethod
@@ -174,9 +177,11 @@ class Targeter:
         if you don't have a corrected vector from origin to target body center.
         """
         pointing_ephemeris = self._coerce_pointing_ephemeris(pointings)
-        self.ephemerides["topocentric"] = self._calculate_intersections(
-            pointing_ephemeris
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.ephemerides["topocentric"] = self._calculate_intersections(
+                pointing_ephemeris
+            )
         self.ephemerides["pointing"] = pointing_ephemeris
 
     def find_target_grid(self, raveled_meshgrid):
@@ -189,9 +194,11 @@ class Targeter:
             )
         # not really an ephemeris
         pointings = self._coerce_df_cartesian(raveled_meshgrid)
-        self.ephemerides["topocentric"] = self._calculate_intersections(
-            pointings, wide=True
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.ephemerides["topocentric"] = self._calculate_intersections(
+                pointings, wide=True
+            )
         self.ephemerides["pointing"] = pointings
 
     def _calculate_intersections(self, pointing_ephemeris, wide=False):
@@ -219,38 +226,37 @@ class Targeter:
                 "or a similar function before attempting a reference shift."
             )
 
-        if source_frame != target_frame:
-            try:
-                epochs_et = utc_to_et(self.ephemerides["body"]["time"])
-            except ValueError:
-                epochs_et = utc_to_et(
-                    self.ephemerides["body"]["time"].astype("datetime64")
-                )
-            # implicitly handling wide/grid case
-            if (len(epochs_et) == 1) and (
-                len(self.ephemerides["topocentric"]) != 1
-            ):
-                wide = True
-                body_to_target_vectors = (
-                    self.ephemerides["topocentric"][["x", "y", "z"]]
-                    - self.ephemerides["body"][["x", "y", "z"]].iloc[0]
-                )
-
-            else:
-                wide = False
-                body_to_target_vectors = (
-                    self.ephemerides["topocentric"][["x", "y", "z"]]
-                    - self.ephemerides["body"][["x", "y", "z"]]
-                )
-            body_to_target_vectors[
-                ["x", "y", "z", "lon", "lat"]
-            ] = array_reference_shift(
-                body_to_target_vectors[["x", "y", "z"]].values,
-                epochs_et,
-                source_frame,
-                target_frame,
-                wide,
+        try:
+            epochs_et = utc_to_et(self.ephemerides["body"]["time"])
+        except ValueError:
+            epochs_et = utc_to_et(
+                self.ephemerides["body"]["time"].astype("datetime64")
             )
+        # implicitly handling wide/grid case
+        if (len(epochs_et) == 1) and (
+            len(self.ephemerides["topocentric"]) != 1
+        ):
+            wide = True
+            body_to_target_vectors = (
+                self.ephemerides["topocentric"][["x", "y", "z"]]
+                - self.ephemerides["body"][["x", "y", "z"]].iloc[0]
+            )
+
+        else:
+            wide = False
+            body_to_target_vectors = (
+                self.ephemerides["topocentric"][["x", "y", "z"]]
+                - self.ephemerides["body"][["x", "y", "z"]]
+            )
+        body_to_target_vectors[
+            ["x", "y", "z", "lon", "lat"]
+        ] = array_reference_shift(
+            body_to_target_vectors[["x", "y", "z"]].values,
+            epochs_et,
+            source_frame,
+            target_frame,
+            wide,
+        )
         self.ephemerides["bodycentric"] = body_to_target_vectors
 
     def make_intersection_row(self, ix, pointing_row, body_row):

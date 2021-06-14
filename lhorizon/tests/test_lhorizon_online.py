@@ -6,7 +6,8 @@ from itertools import product
 
 import pytest
 
-from lhorizon.base import default_lhorizon_session, LHorizon
+from lhorizon.base import LHorizon
+from lhorizon.lhorizon_utils import default_lhorizon_session
 from lhorizon.config import HORIZONS_SERVER
 from lhorizon.tests.data.test_cases import TEST_CASES
 from lhorizon.tests.utilz import check_against_reference

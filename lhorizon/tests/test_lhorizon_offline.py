@@ -15,14 +15,14 @@ from lhorizon.tests.utilz import make_mock_query
 def test_prepare_request_1():
     case = TEST_CASES["CYDONIA_PALM_SPRINGS_1959_TOPO"]
     test_lhorizon = LHorizon(**case["init_kwargs"])
-    test_lhorizon._prepare_request()
+    test_lhorizon.prepare_request()
     assert test_lhorizon.request.url == case["request_url"]
 
 
 def test_prepare_request_2():
     case = TEST_CASES["MEUDON_MOON_NOW"]
     test_lhorizon = LHorizon(**case["init_kwargs"])
-    test_lhorizon._prepare_request()
+    test_lhorizon.prepare_request()
     assert test_lhorizon.request.url.startswith(case["request_url"])
     assert round(Time.now().jd, 4) == round(
         float(
@@ -35,7 +35,7 @@ def test_prepare_request_2():
 def test_prepare_request_3():
     case = TEST_CASES["SUN_PHOBOS_1999"]
     test_lhorizon = LHorizon(**case["init_kwargs"])
-    test_lhorizon._prepare_request()
+    test_lhorizon.prepare_request()
     assert test_lhorizon.request.url == case["request_url"]
 
 

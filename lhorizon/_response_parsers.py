@@ -14,8 +14,6 @@ def make_horizon_dataframe(raw_horizon_response, get_target_location=False):
     """make a pandas dataframe from a raw horizon response."""
 
     # delimiters for column and data sections
-    # TODO: this only works right if all the columns are selected. maybe
-    #  specifying this in a better way would be better.
     # 'JDTDB' begins the vectors columns; 'Date' begins the observer columns
     horizon_column_search = re.compile(r"(Date|JDTDB).*(?=\n\*+)")
     horizon_data_search = re.compile(
