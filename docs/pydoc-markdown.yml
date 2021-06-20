@@ -1,0 +1,19 @@
+loaders:
+  - type: python
+processors:
+  - type: filter
+  - type: smart
+  - type: crossref
+renderer:
+  type: mkdocs
+  pages:
+    - title: LHorizon
+      name: index
+      source: lhorizon.md
+    - title: API Documentation
+      contents:
+        - '*'
+  mkdocs_config:
+    mkdocs_config:
+      site_name: lhorizon
+      theme: readthedocs

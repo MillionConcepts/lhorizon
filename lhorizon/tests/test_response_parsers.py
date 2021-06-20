@@ -7,11 +7,11 @@ from lhorizon.tests.data.test_cases import TEST_CASES
 from lhorizon.tests.utilz import check_against_reference
 
 CASES_TO_USE = (
+    "SUN_PHOBOS_1999",
     "CERES_2000",
     "CYDONIA_PALM_SPRINGS_1959_TOPO",
-    "SUN_PHOBOS_1999",
 )
-cases = {k: v for k, v in TEST_CASES.items() if k in CASES_TO_USE}
+cases = {case: TEST_CASES[case] for case in CASES_TO_USE}
 test_parameters = product(cases.keys(), ("OBSERVER", "VECTORS"))
 
 

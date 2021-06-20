@@ -1,19 +1,19 @@
+import datetime as dt
 import re
 from collections.abc import Sequence
 from functools import reduce
+from math import floor
 from operator import or_
 from typing import Any, Optional, Pattern, Union
 
-import astropy.time as at
-import dateutil.parser as dtp
 import numpy as np
 import pandas as pd
 import pandas.api.types
 import requests
 from numpy.linalg import norm
-from numpy.typing import ArrayLike
 
 from lhorizon import config as config
+from lhorizon._type_aliases import Array, Timelike
 
 
 def listify(thing: Any) -> list:
@@ -69,29 +69,55 @@ def hunt_csv(regex: Pattern, body: str) -> list:
     return [field.strip() for field in csv_fields]
 
 
-# TODO: make this better at handling pre-1960 dates
-def convert_to_jd(epochs: Sequence) -> list[float]:
+LEAP_SECOND_THRESHOLDS = [
+    dt.datetime(1972, 6, 30, tzinfo=dt.timezone.utc),
+    dt.datetime(1972, 12, 31, tzinfo=dt.timezone.utc),
+    dt.datetime(1973, 12, 31, tzinfo=dt.timezone.utc),
+    dt.datetime(1974, 12, 31, tzinfo=dt.timezone.utc),
+    dt.datetime(1975, 12, 31, tzinfo=dt.timezone.utc),
+    dt.datetime(1976, 12, 31, tzinfo=dt.timezone.utc),
+    dt.datetime(1977, 12, 31, tzinfo=dt.timezone.utc),
+    dt.datetime(1978, 12, 31, tzinfo=dt.timezone.utc),
+    dt.datetime(1979, 12, 31, tzinfo=dt.timezone.utc),
+    dt.datetime(1981, 6, 30, tzinfo=dt.timezone.utc),
+    dt.datetime(1982, 6, 30, tzinfo=dt.timezone.utc),
+    dt.datetime(1983, 6, 30, tzinfo=dt.timezone.utc),
+    dt.datetime(1985, 6, 30, tzinfo=dt.timezone.utc),
+    dt.datetime(1987, 12, 31, tzinfo=dt.timezone.utc),
+    dt.datetime(1989, 12, 31, tzinfo=dt.timezone.utc),
+    dt.datetime(1990, 12, 31, tzinfo=dt.timezone.utc),
+    dt.datetime(1992, 6, 30, tzinfo=dt.timezone.utc),
+    dt.datetime(1993, 6, 30, tzinfo=dt.timezone.utc),
+    dt.datetime(1994, 6, 30, tzinfo=dt.timezone.utc),
+    dt.datetime(1995, 12, 31, tzinfo=dt.timezone.utc),
+    dt.datetime(1997, 6, 30, tzinfo=dt.timezone.utc),
+    dt.datetime(1998, 12, 31, tzinfo=dt.timezone.utc),
+    dt.datetime(2005, 12, 31, tzinfo=dt.timezone.utc),
+    dt.datetime(2008, 12, 31, tzinfo=dt.timezone.utc),
+    dt.datetime(2012, 6, 30, tzinfo=dt.timezone.utc),
+    dt.datetime(2015, 6, 30, tzinfo=dt.timezone.utc),
+    dt.datetime(2016, 12, 31, tzinfo=dt.timezone.utc)
+]
+
+
+def dt_to_jd(time: Union[dt.datetime, pd.Series]) -> Union[float, pd.Series]:
     """
-    convert passed epochs to jd. may currently raise warnings for dates prior
-    to 1960 due to some astropy.Time corner cases involving leap seconds.
+    convert passed datetime or Series of datetime to julian day number (jd).
+    algorithm derived from Julian Date article on scienceworld.wolfram.com,
+    itself based on Danby, J. M., Fundamentals of Celestial Mechanics
     """
-    epochs = listify(epochs)
-    # # astropy uses a nonstandard iso format with no T separator
-    # if isinstance(epochs[0], str):
-    #     if "T" in epochs[0]:
-    #         epochs = [epoch.replace("T", " ") for epoch in epochs]
-    # coerce iterable / scalar iso or dt inputs to jd
-    scale = "utc"
-    try:
-        parsed_epochs = [float(epoch) for epoch in epochs]
-        at_format = "jd"
-    except ValueError:
-        parsed_epochs = [dtp.parse(epoch) for epoch in epochs]
-        utc_cutoff = dtp.parse("1960-01-01")
-        if any([epoch < utc_cutoff for epoch in parsed_epochs]):
-            scale = "tai"
-        at_format = "datetime"
-    return at.Time(parsed_epochs, format=at_format, scale=scale).jd
+    # use accessor on datetime series
+    if isinstance(time, pd.Series):
+        time = time.dt
+    y, m, d = time.year, time.month, time.day
+    h = time.hour + time.minute / 60 + time.second / 3600
+    return sum([
+        367 * y,
+        -1 * floor(7 * (y + floor((m + 9) / 12)) / 4),
+        -1 * floor(3 * (floor((y + (m - 9) / 7) / 100) + 1) / 4),
+        floor(275 * m / 9) + d + 1721028.5,
+        h / 24
+    ])
 
 
 def numeric_columns(data: pd.DataFrame) -> list[str]:
@@ -103,14 +129,37 @@ def numeric_columns(data: pd.DataFrame) -> list[str]:
     ]
 
 
-def utc_to_et(utc):
-    """convert UTC -> 'seconds since J2000' format preferred by SPICE"""
-    return (at.Time(utc) - at.Time("J2000")).sec
+def produce_jd_series(
+    epochs: Union[Timelike, Sequence[Timelike]]
+) -> pd.Series:
+    """
+    convert passed epochs to julian day number (jd). scale is assumed to be
+    utc. this may of course produce very slightly spurious results for dates
+    in the future for which leap seconds have not yet been assigned. floats or
+    floatlike strings will be interpreted as jd and not modified. inputs of
+    mixed time formats or scales will likely produce undesired behavior.
+    """
+
+    if not isinstance(epochs, pd.Series):
+        epochs = listify(epochs)
+        epochs = pd.Series(epochs)
+    try:
+        return epochs.astype(float)
+    except (ValueError, TypeError):
+        return dt_to_jd(epochs.astype("datetime64"))
 
 
-def utc_to_jd(utc):
-    """convert UTC string -> jd string -- for horizons or whatever"""
-    return at.Time(utc).jd
+DT_J2000 = dt.datetime(2000, 1, 1, 11, 58, 55, 816000)
+
+
+def time_series_to_et(time_series):
+    """
+    convert time -> 'seconds since J2000' epoch scale preferred by SPICE --
+    anything pandas
+    """
+    if not isinstance(time_series, pd.Series):
+        time_series = pd.Series(listify(time_series))
+    return (time_series.astype("datetime64") - DT_J2000).dt.total_seconds()
 
 
 def is_it(*types):
@@ -123,9 +172,9 @@ def is_it(*types):
 
 
 def sph2cart(
-    lat: Union[float, ArrayLike],
-    lon: Union[float, ArrayLike],
-    radius: Union[float, ArrayLike] = 1,
+    lat: Union[float, Array],
+    lon: Union[float, Array],
+    radius: Union[float, Array] = 1,
     unit: str = "degrees",
 ):
     """
@@ -150,9 +199,9 @@ def sph2cart(
 
 
 def cart2sph(
-    x0: Union[float, ArrayLike],
-    y0: Union[float, ArrayLike],
-    z0: Union[float, ArrayLike],
+    x0: Union[float, Array],
+    y0: Union[float, Array],
+    z0: Union[float, Array],
     unit: str = "degrees",
 ) -> Union[pd.DataFrame, tuple]:
     """

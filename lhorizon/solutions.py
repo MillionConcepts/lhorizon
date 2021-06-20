@@ -15,7 +15,7 @@ x, y, z, x0, y0, z0, mx, my, mz, d = sp.symbols(
 
 def ray_sphere_equations(radius: float) -> list[sp.Eq]:
     """
-    simple system of equations for intersections between:
+    generate a simple system of equations for intersections between
     a ray with origin at (0, 0, 0) and direction vector [x, y, z]
     and a sphere with radius == 'radius' and center (mx, my, mz).
     """

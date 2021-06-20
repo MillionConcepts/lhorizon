@@ -8,7 +8,6 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Union, Optional
 import warnings
 
-import astropy.time as at
 import pandas as pd
 import requests
 
@@ -25,14 +24,69 @@ from lhorizon._request_formatters import (
     format_geodetic_origin,
 )
 
-from lhorizon.lhorizon_utils import convert_to_jd, default_lhorizon_session
+from lhorizon.lhorizon_utils import produce_jd_series, default_lhorizon_session
 
 
 class LHorizon:
     """
-    A class for querying and formatting data from the
-    `JPL Horizons <https://ssd.jpl.nasa.gov/horizons.cgi>`service.
-    """
+    JPL HORIZONS interface object, the core class of `lhorizon`.
+
+    Parameters
+    ----------
+    target : str or int, optional
+        Name, number, or designation of the object to be queried. the Moon
+        is used if no target is passed. Arbitrary topocentric coordinates
+        can also be provided in a dict, like:
+        ```
+        {
+            'lon': longitude in deg,
+            'lat': latitude in deg (North positive, South negative),
+            'elevation': elevation in km above the reference ellipsoid,
+            ['body': Horizons body ID of the central body; optional;
+            Earth is used if it is not provided.]
+        }.
+        ```
+        Horizons must possess a rotational model and reference ellipsoid
+        for the central body in order to process topocentric queries --
+        don't expect this to work with artificial satellites or most small
+        bodies, for instance.  Also note that Horizons always treats
+        west-longitude as positive for prograde bodies and east-longitude
+        as positive for retrograde bodies, with the very notable
+        exceptions of the Earth, Moon, and Sun; despite the fact that they
+        are prograde, it treats east-longitude as positive on these three
+        bodies.
+    origin : int, str, or dict, optional
+        Coordinate origin (representing central body or observer location).
+        Uses the same codes as JPL Horizons -- in some cases, text will
+        work, in some cases it will not. If no location is provided,
+        Earth's center is used. Arbitrary topocentic coordinates can also
+        be given as a dict, in the same format as the target parameter.
+    epochs : dict[str, str] or Sequence[str, float, dt.datetime], optional
+        Either a scalar in any astropy.time - parsable format,
+        a list of epochs in jd, iso, or dt format, or a dict
+        defining a range of times and dates. Timescale is UTC for OBSERVER
+        queries and TDB for VECTORS queries. If no epochs are provided,
+        the current time is used. Scalars or range dictionaries are
+        preferred over lists, as they tend to be processed more easily by
+        Horizons. The range dictionary format is:
+        {
+            ``'start'``:'YYYY-MM-DD [HH:MM:SS.fff]',
+            ``'stop'``:'YYYY-MM-DD [HH:MM:SS.fff]',
+            ``'step'``:'n[y|d|h|m]'
+        }
+        If no units are provided for step, Horizons evenly divides the
+        period between start and stop into n intervals.
+    session: requests.Session, optional
+        session object for optimizing API calls. A new session is generated
+        if one is not passed.
+    allow_long_queries: bool, optional
+        if True, allows long (>2000 character) URLs to be used to query
+        JPL Horizons. These will often be truncated serverside, resulting
+        in unexpected output, and so are not allowed by default.
+    query_options: dict, optional
+        additional Horizons query options. See documentation for a list of
+        supported options.
+        """
 
     def __init__(
         self,
@@ -44,63 +98,6 @@ class LHorizon:
         allow_long_queries: bool = False,
         query_options: Optional[Mapping] = None,
     ):
-        """
-        JPL HORIZONS interface object, the core class of `lhorizon`.
-
-        Parameters
-        ----------
-        target : str or int, optional
-            Name, number, or designation of the object to be queried. the Moon
-            is used if no target is passed. Arbitrary topocentric coordinates
-            can also be provided in a dict, like:
-            {
-                'lon': longitude in deg,
-                'lat': latitude in deg (North positive, South negative),
-                'elevation': elevation in km above the reference ellipsoid,
-                ['body': Horizons body ID of the central body; optional;
-                Earth is used if it is not provided.]
-            }.
-            Horizons must possess a rotational model and reference ellipsoid
-            for the central body in order to process topocentric queries --
-            don't expect this to work with artificial satellites or most small
-            bodies, for instance.  Also note that Horizons always treats
-            west-longitude as positive for prograde bodies and east-longitude
-            as positive for retrograde bodies, with the very notable
-            exceptions of the Earth, Moon, and Sun; despite the fact that they
-            are prograde, it treats east-longitude as positive on these three
-            bodies.
-        origin : int, str, or dict, optional
-            Coordinate origin (representing central body or observer location).
-            Uses the same codes as JPL Horizons -- in some cases, text will
-            work, in some cases it will not. If no location is provided,
-            Earth's center is used. Arbitrary topocentic coordinates can also
-            be given as a dict, in the same format as the target parameter.
-        epochs : dict[str, str] or Sequence[str, float, dt.datetime], optional
-            Either a scalar in any astropy.time - parsable format,
-            a list of epochs in jd, iso, or dt format, or a dict
-            defining a range of times and dates. Timescale is UTC for OBSERVER
-            queries and TDB for VECTORS queries. If no epochs are provided,
-            the current time is used. Scalars or range dictionaries are
-            preferred over lists, as they tend to be processed more easily by
-            Horizons. The range dictionary format is:
-            {
-                ``'start'``:'YYYY-MM-DD [HH:MM:SS.fff]',
-                ``'stop'``:'YYYY-MM-DD [HH:MM:SS.fff]',
-                ``'step'``:'n[y|d|h|m]'
-            }
-            If no units are provided for step, Horizons evenly divides the
-            period between start and stop into n intervals.
-        session: requests.Session, optional
-            session object for optimizing API calls. A new session is generated
-            if one is not passed.
-        allow_long_queries: bool, optional
-            if True, allows long (>2000 character) URLs to be used to query
-            JPL Horizons. These will often be truncated serverside, resulting
-            in unexpected output, and so are not allowed by default.
-        query_options: dict, optional
-            additional Horizons query options. See documentation for a list of
-            supported options.
-        """
         if isinstance(target, MutableMapping):
             target = self._prep_geodetic_location(target)
         self.target = target
@@ -282,13 +279,14 @@ class LHorizon:
                 )
 
     @staticmethod
-    def _prep_epochs(epochs: Union[str, float, Mapping]):
+    def _prep_epochs(epochs: Union[Sequence, str, float, Mapping]):
         """
         convert epochs to a standardized form. should generally only be called
         by __init__
         """
+        import datetime as dt
         if epochs is None:
-            return at.Time.now().jd
+            return produce_jd_series(dt.datetime.utcnow())
         if isinstance(epochs, Mapping):
             if not (
                 "start" in epochs and "stop" in epochs and "step" in epochs
@@ -298,7 +296,7 @@ class LHorizon:
                     "and step".format(str(epochs))
                 )
             return epochs
-        epochs = convert_to_jd(epochs)
+        epochs = produce_jd_series(epochs)
         return epochs
 
     @staticmethod
@@ -317,19 +315,23 @@ class LHorizon:
 
     def __str__(self):
         """
-        String representation of LHorizon
+        String representation of LHorizon object instance
         """
+        if isinstance(self.epochs, pd.Series):
+            print_epochs = self.epochs.values
+        else:
+            print_epochs = self.epochs
         return (
             "LHorizon: target={:s}; location={:s}; epochs={:s}; {}" ""
         ).format(
             str(self.target),
             str(self.location),
-            str(self.epochs),
+            str(print_epochs),
             "queried" if self.check_queried() else "not queried",
         )
 
     def __repr__(self):
         """
-        String representation of LHorizon object instance'
+        String representation of LHorizon object instance
         """
         return self.__str__()

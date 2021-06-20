@@ -8,6 +8,7 @@ from collections.abc import Mapping, Sequence
 from typing import Union
 
 import numpy as np
+import pandas as pd
 
 
 def format_geodetic_origin(location: Mapping) -> dict:
@@ -33,7 +34,7 @@ def format_geodetic_target(location: Mapping) -> str:
 def format_epoch_params(epochs: Union[Sequence, Mapping]) -> dict:
     """creates dict of URL parameters from epochs"""
     epoch_payload = {}
-    if isinstance(epochs, (list, tuple, np.ndarray)):
+    if isinstance(epochs, (pd.Series, list, tuple, np.ndarray)):
         epoch_payload["TLIST"] = "\n".join([str(epoch) for epoch in epochs])
     elif isinstance(epochs, dict):
         if (

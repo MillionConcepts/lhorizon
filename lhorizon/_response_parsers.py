@@ -10,12 +10,12 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from astropy import units as u
 from dateutil import parser as dtp
-from numpy.typing import ArrayLike
 
-from lhorizon.lhorizon_utils import hunt_csv
 from lhorizon.config import TABLE_PATTERNS
+from lhorizon.constants import AU_TO_M
+from lhorizon.lhorizon_utils import hunt_csv
+from lhorizon._type_aliases import Array
 
 
 def make_lhorizon_dataframe(
@@ -68,7 +68,7 @@ def make_lhorizon_dataframe(
     return horizon_dataframe.dropna(axis=1)
 
 
-def clean_up_vectors_series(pattern: str, series: ArrayLike) -> pd.Series:
+def clean_up_vectors_series(pattern: str, series: Array) -> pd.Series:
     """
     regularize units, format text, and parse dates in a VECTORS table column
     """
@@ -82,7 +82,7 @@ def clean_up_vectors_series(pattern: str, series: ArrayLike) -> pd.Series:
 
 
 def clean_up_observer_series(
-    pattern: str, series: ArrayLike
+    pattern: str, series: Array
 ) -> Optional[pd.Series]:
     """
     regularize units, format text, and parse dates in an OBSERVER table column
@@ -101,9 +101,8 @@ def clean_up_observer_series(
             # generally random spaces added after a minus sign
             return series.str.replace(" ", "").astype(np.float64)
     if pattern == "delta":
-        au_to_m = (1 * u.au).to(u.m).value
         return pd.Series(
-            [au_to_m * delta for delta in series.astype(np.float64)]
+            [AU_TO_M * delta for delta in series.astype(np.float64)]
         )
     if pattern in ["ObsSub-LON", "ObsSub-LAT"]:
         return series.astype(np.float64)
@@ -120,7 +119,7 @@ def clean_up_observer_series(
 
 
 def clean_up_series(
-    query_type: str, pattern: str, series: ArrayLike
+    query_type: str, pattern: str, series: Array
 ) -> pd.Series:
     """
     dispatch function for Horizons column cleanup functions

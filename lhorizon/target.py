@@ -6,17 +6,17 @@ import warnings
 import numpy as np
 import pandas as pd
 import spiceypy as spice
-from numpy.typing import ArrayLike
 
 from lhorizon import LHorizon
-from lhorizon.lhorizon_utils import sph2cart, hats, utc_to_et
+from lhorizon._type_aliases import Array, Ephemeris
+from lhorizon.lhorizon_utils import sph2cart, hats, time_series_to_et
 from lhorizon.solutions import make_ray_sphere_lambdas
 
 
 def find_intersections(
     solutions: Mapping[Callable],
-    ray_direction: ArrayLike,
-    target_center: ArrayLike,
+    ray_direction: Array,
+    target_center: Array,
 ) -> dict:
     """
     find intersections between ray_direction and target_center given a mapping
@@ -32,7 +32,7 @@ def find_intersections(
 
 
 def array_reference_shift(
-    positions: ArrayLike,
+    positions: Array,
     time_series: Sequence,
     origin: str,
     destination: str,
@@ -74,7 +74,7 @@ def array_reference_shift(
 class Targeter:
     def __init__(
         self,
-        target: Union[LHorizon, pd.DataFrame],
+        target: Ephemeris,
         solutions: Mapping[Callable] = None,
         target_radius: Optional[float] = None,
     ):
@@ -261,9 +261,9 @@ class Targeter:
             )
 
         try:
-            epochs_et = utc_to_et(self.ephemerides["body"]["time"])
+            epochs_et = time_series_to_et(self.ephemerides["body"]["time"])
         except ValueError:
-            epochs_et = utc_to_et(
+            epochs_et = time_series_to_et(
                 self.ephemerides["body"]["time"].astype("datetime64")
             )
         # implicitly handling wide/grid case

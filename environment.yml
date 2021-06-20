@@ -4,12 +4,12 @@ channels:
   - defaults
 dependencies:
   - jupyter
+  - more-itertools
+  - numpy
   - python=3.9
   - pandas
-  - numpy
-  - requests
-  - astropy
-  - more-itertools
   - pytest
   - pytest-mock
+  - requests
   - spiceypy
+  - sympy
