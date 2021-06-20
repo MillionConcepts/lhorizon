@@ -1,19 +1,23 @@
 loaders:
   - type: python
+    search_path: ['../lhorizon']
+    ignore_when_discovered: ['examples', 'shiny_scratch', 'constants', 'tests', '_type_aliases']
 processors:
   - type: filter
   - type: smart
   - type: crossref
 renderer:
-  type: mkdocs
+  type: markdown
+  output_directory: .
   pages:
-    - title: LHorizon
-      name: index
-      source: lhorizon.md
     - title: API Documentation
-      contents:
-        - '*'
+      name: index
   mkdocs_config:
-    mkdocs_config:
-      site_name: lhorizon
-      theme: readthedocs
+    site_name: lhorizon
+    theme: readthedocs
+  descriptive_module_title: True
+  add_method_class_prefix: True
+  add_member_class_prefix: True
+  signature_with_def: True
+  render_toc: True
+  toc_maxdepth: 4
