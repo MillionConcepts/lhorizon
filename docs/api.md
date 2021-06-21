@@ -171,14 +171,17 @@ equation for a sphere of radius `radius`.
 <a name="config"></a>
 # Module config
 
-configuration options for `lhorizon`
+configuration options for `lhorizon`. Modifying members of this module will
+change the default behavior of `LHorizon` objects.
 
-OBSERVER_QUANTITIES: default Horizons QUANTITIES columns for OBSERVER queries
-VECTORS_QUANTITIES: timeout for connecting to jpl server
-TIMEOUT: timeout in seconds for JPL
-HORIZONS_SERVER: address of Horizons CGI gateway
-DEFAULT_HEADERS: default headers for Horizons requests
-TABLE_PATTERNS: tables of regexes used to match Horizons fields and the
+### options
+
+* OBSERVER_QUANTITIES: default Horizons QUANTITIES columns for OBSERVER queries
+* VECTORS_QUANTITIES: default Horizons QUANTITIES columns for VECTORS queries
+* TIMEOUT: timeout in seconds for JPL
+* HORIZONS_SERVER: address of Horizons CGI gateway
+* DEFAULT_HEADERS: default headers for Horizons requests
+* TABLE_PATTERNS: tables of regexes used to match Horizons fields and the
     arguably more-readable column names we assign them to
 
 <a name="_request_formatters"></a>
