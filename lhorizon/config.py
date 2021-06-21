@@ -1,10 +1,20 @@
-"""configuration options for `lhorizon`"""
+"""
+configuration options for `lhorizon`. Modifying members of this module will
+change the default behavior of `LHorizon` objects.
 
+### options
 
-# default Horizons QUANTITIES columns
+* OBSERVER_QUANTITIES: default Horizons QUANTITIES columns for OBSERVER queries
+* VECTORS_QUANTITIES: default Horizons QUANTITIES columns for VECTORS queries
+* TIMEOUT: timeout in seconds for JPL
+* HORIZONS_SERVER: address of Horizons CGI gateway
+* DEFAULT_HEADERS: default headers for Horizons requests
+* TABLE_PATTERNS: tables of regexes used to match Horizons fields and the
+    arguably more-readable column names we assign them to
+"""
+
 OBSERVER_QUANTITIES = "1,2,4,13,14,15,17,20,45"
 VECTORS_QUANTITIES = "3"
-# timeout for connecting to jpl server
 TIMEOUT = 30
 
 HORIZONS_SERVER = "https://ssd.jpl.nasa.gov/horizons_batch.cgi"
@@ -15,9 +25,6 @@ DEFAULT_HEADERS = {
 
 }
 
-
-# tables of regexes used to match Horizons fields and the arguably
-# more-readable column names we assign them to
 TABLE_PATTERNS = {
     "VECTORS": {
         r"Calendar Date": "time_tdb",
@@ -64,5 +71,3 @@ TABLE_PATTERNS = {
         "geo_el": "geo_el",
     },
 }
-
-KNOWN_QUERY_TYPES = ("OBSERVER", "VECTORS", "ELEMENTS")

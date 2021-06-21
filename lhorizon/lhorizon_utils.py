@@ -1,6 +1,6 @@
 import datetime as dt
 import re
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from functools import reduce
 from math import floor
 from operator import or_
@@ -96,7 +96,7 @@ LEAP_SECOND_THRESHOLDS = [
     dt.datetime(2008, 12, 31, tzinfo=dt.timezone.utc),
     dt.datetime(2012, 6, 30, tzinfo=dt.timezone.utc),
     dt.datetime(2015, 6, 30, tzinfo=dt.timezone.utc),
-    dt.datetime(2016, 12, 31, tzinfo=dt.timezone.utc)
+    dt.datetime(2016, 12, 31, tzinfo=dt.timezone.utc),
 ]
 
 
@@ -104,20 +104,22 @@ def dt_to_jd(time: Union[dt.datetime, pd.Series]) -> Union[float, pd.Series]:
     """
     convert passed datetime or Series of datetime to julian day number (jd).
     algorithm derived from Julian Date article on scienceworld.wolfram.com,
-    itself based on Danby, J. M., Fundamentals of Celestial Mechanics
+    itself based on Danby, J. M., _Fundamentals of Celestial Mechanics_
     """
     # use accessor on datetime series
     if isinstance(time, pd.Series):
         time = time.dt
     y, m, d = time.year, time.month, time.day
     h = time.hour + time.minute / 60 + time.second / 3600
-    return sum([
-        367 * y,
-        -1 * floor(7 * (y + floor((m + 9) / 12)) / 4),
-        -1 * floor(3 * (floor((y + (m - 9) / 7) / 100) + 1) / 4),
-        floor(275 * m / 9) + d + 1721028.5,
-        h / 24
-    ])
+    return sum(
+        [
+            367 * y,
+            -1 * floor(7 * (y + floor((m + 9) / 12)) / 4),
+            -1 * floor(3 * (floor((y + (m - 9) / 7) / 100) + 1) / 4),
+            floor(275 * m / 9) + d + 1721028.5,
+            h / 24,
+        ]
+    )
 
 
 def numeric_columns(data: pd.DataFrame) -> list[str]:
@@ -152,20 +154,25 @@ def produce_jd_series(
 DT_J2000 = dt.datetime(2000, 1, 1, 11, 58, 55, 816000)
 
 
-def time_series_to_et(time_series):
+def time_series_to_et(
+    time_series: Union[
+        str, Sequence[str], dt.datetime, Sequence[dt.datetime], pd.Series
+    ]
+) -> pd.Series:
     """
-    convert time -> 'seconds since J2000' epoch scale preferred by SPICE --
-    anything pandas
+    convert time -> 'seconds since J2000' epoch scale preferred by SPICE.
+    accepts anything `pandas` can cast to Series and interpret as datetime.
+    Assumes input is in UTC time scale.
     """
     if not isinstance(time_series, pd.Series):
         time_series = pd.Series(listify(time_series))
     return (time_series.astype("datetime64") - DT_J2000).dt.total_seconds()
 
 
-def is_it(*types):
-    """partially-evaluated predicate form of isinstance"""
+def is_it(*types: type) -> Callable[Any, bool]:
+    """partially-evaluated predicate form of `isinstance`"""
 
-    def it_is(whatever):
+    def it_is(whatever: Any):
         return isinstance(whatever, types)
 
     return it_is

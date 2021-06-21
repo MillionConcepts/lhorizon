@@ -64,7 +64,9 @@ def lambdify_system(
     }
 
 
-def make_ray_sphere_lambdas(radius: float, farside=False):
+def make_ray_sphere_lambdas(
+    radius: float, farside=False
+) -> dict[str, Callable]:
     """
     produce a dict of functions that return solutions for the ray-sphere
     equation for a sphere of radius `radius`.

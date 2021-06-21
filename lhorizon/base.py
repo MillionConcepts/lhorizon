@@ -31,62 +31,110 @@ class LHorizon:
     """
     JPL HORIZONS interface object, the core class of `lhorizon`.
 
-    Parameters
-    ----------
-    target : str or int, optional
-        Name, number, or designation of the object to be queried. the Moon
-        is used if no target is passed. Arbitrary topocentric coordinates
-        can also be provided in a dict, like:
-        ```
-        {
-            'lon': longitude in deg,
-            'lat': latitude in deg (North positive, South negative),
-            'elevation': elevation in km above the reference ellipsoid,
-            ['body': Horizons body ID of the central body; optional;
-            Earth is used if it is not provided.]
-        }.
-        ```
-        Horizons must possess a rotational model and reference ellipsoid
-        for the central body in order to process topocentric queries --
-        don't expect this to work with artificial satellites or most small
-        bodies, for instance.  Also note that Horizons always treats
-        west-longitude as positive for prograde bodies and east-longitude
-        as positive for retrograde bodies, with the very notable
-        exceptions of the Earth, Moon, and Sun; despite the fact that they
-        are prograde, it treats east-longitude as positive on these three
-        bodies.
-    origin : int, str, or dict, optional
-        Coordinate origin (representing central body or observer location).
-        Uses the same codes as JPL Horizons -- in some cases, text will
-        work, in some cases it will not. If no location is provided,
-        Earth's center is used. Arbitrary topocentic coordinates can also
-        be given as a dict, in the same format as the target parameter.
-    epochs : dict[str, str] or Sequence[str, float, dt.datetime], optional
-        Either a scalar in any astropy.time - parsable format,
-        a list of epochs in jd, iso, or dt format, or a dict
-        defining a range of times and dates. Timescale is UTC for OBSERVER
-        queries and TDB for VECTORS queries. If no epochs are provided,
-        the current time is used. Scalars or range dictionaries are
-        preferred over lists, as they tend to be processed more easily by
-        Horizons. The range dictionary format is:
-        {
-            ``'start'``:'YYYY-MM-DD [HH:MM:SS.fff]',
-            ``'stop'``:'YYYY-MM-DD [HH:MM:SS.fff]',
-            ``'step'``:'n[y|d|h|m]'
-        }
-        If no units are provided for step, Horizons evenly divides the
-        period between start and stop into n intervals.
-    session: requests.Session, optional
-        session object for optimizing API calls. A new session is generated
-        if one is not passed.
-    allow_long_queries: bool, optional
-        if True, allows long (>2000 character) URLs to be used to query
-        JPL Horizons. These will often be truncated serverside, resulting
-        in unexpected output, and so are not allowed by default.
-    query_options: dict, optional
-        additional Horizons query options. See documentation for a list of
-        supported options.
-        """
+    ### Parameters
+        target: Union[int, str, MutableMapping] = "301",
+        origin: Union[int, str, MutableMapping] = "500@399",
+        epochs: Optional[Union[str, float, Sequence[float], Mapping]] = None,
+        session: Optional[requests.Session] = None
+    #### target: Union[int, str, MutableMapping] = "301"
+
+    Name, number, or designation of the object to be queried. the Moon
+    is used if no target is passed. Arbitrary topocentric coordinates
+    can also be provided in a dict, like:
+    ```python
+    {
+        'lon': longitude in deg,
+        'lat': latitude in deg (North positive, South negative),
+        'elevation': elevation in km above the reference ellipsoid,
+        ['body': Horizons body ID of the central body; optional;
+        Earth is used if it is not provided.]
+    }.
+    ```
+    Horizons must possess a rotational model and reference ellipsoid
+    for the central body in order to process topocentric queries --
+    don't expect this to work with artificial satellites or most small
+    bodies, for instance.  Also note that Horizons always treats
+    west-longitude as positive for prograde bodies and east-longitude
+    as positive for retrograde bodies, with the very notable
+    exceptions of the Earth, Moon, and Sun; despite the fact that they
+    are prograde, it treats east-longitude as positive on these three
+    bodies.
+
+    #### origin: Union[int, str, MutableMapping] = "500@399"
+    Coordinate origin (representing central body or observer location).
+    Uses the same codes as JPL Horizons -- in some cases, text will
+    work, in some cases it will not. If no location is provided,
+    Earth's center is used. Arbitrary topocentic coordinates can also
+    be given as a dict, in the same format as the target parameter.
+    #### epochs: Optional[Union[str, float, Sequence[float], Mapping]]
+    Either a scalar in any astropy.time - parsable format,
+    a list of epochs in jd, iso, or dt format, or a dict
+    defining a range of times and dates. Timescale is UTC for OBSERVER
+    queries and TDB for VECTORS queries. If no epochs are provided,
+    the current time is used. Scalars or range dictionaries are
+    preferred over lists, as they tend to be processed more easily by
+    Horizons. The range dictionary format is:
+    ```python
+    {
+        'start':'YYYY-MM-DD [HH:MM:SS.fff]',
+        'stop':'YYYY-MM-DD [HH:MM:SS.fff]',
+        'step':'n[y|d|h|m]'
+    }
+    ```
+    If no units are provided for `step`, Horizons evenly divides the
+    period between `start` and `stop` into n intervals.
+    #### session: Optional[requests.Session]
+    session object for optimizing API calls. A new session is generated
+    if one is not passed.
+    #### allow_long_queries: bool = False
+    if True, allows long (>2000 character) URLs to be used to query
+    JPL Horizons. These will often be truncated serverside, resulting
+    in unexpected output, and so are not allowed by default.
+    #### query_options: dict, optional
+    lower-level options passed to JPL Horizons. not all of these options are
+    meaningful for all queries. See JPL documentation for fuller descriptions
+    of some of these options. allowed keys and value types are:
+    * `airmass_lessthan: int` cuts off points with airmass > value
+    * `solar_elongation: Sequence[int]` e.g. `(30, 60)` suppresses times at
+    which angular separation between Sun and target in degrees exceeds this
+    value
+    * `max_hour_angle: float` suppresses times at which local hour angle at
+    Earth topocentric location exceeds this value in angular hours
+    * `rate_cutoff: float` suppresses times at which observer-target relative
+    rate in arcseconds/hour exceeds this value
+    * `skip_daylight: bool = False` suppresses times at which Sun is visible
+    from observer
+    * `refraction: bool = False` apply correction for atmospheric refraction
+    (Earth sites only)
+    * `refsystem: str = "J2000"` base coordinate reference system. default is
+    "J2000", Earth mean equator and equinox of January 1 2000,
+    closely aligned with ICRF and equivalent to SPICE "J2000'. Can also be
+    "B1950", FK5 / Earth mean equator of 1950.
+    * `quantities: str` Horizons quantity codes, expressed as a
+    comma-separated string. defaults for each query type
+    can be set in `lhorizon.config`. See JPL documentation for a full list of
+    code. "A" will return all available quantities.
+    * `extra_precision: bool=False`: return full available precision for
+    RA/Dec values in OBSERVER tables
+
+    ### attributes
+
+    All parameters are also accessible class attributes. However, we do
+    not suggest that users modify target, origin, epochs, or query_type after
+    initialization. If session, query_options, or allow_long_queries are
+    modified, `lhorizon.prepare_request()` must be called in order for changes
+    to these attributes to affect subsequent queries to JPL Horizons.
+
+    #### request
+    `request.PreparedRequest` object: request for JPL Horizons.
+
+    #### response
+    `requests.response` objects: response from JPL Horizons. Examining
+    `lhorizon.response.content` is a DIY alternative to using the
+    `lhorizon.table()` or `lhorizon.dataframe()` methods.
+
+    ### methods
+    """
 
     def __init__(
         self,
@@ -195,8 +243,8 @@ class LHorizon:
     def _prepare(
         self,
         airmass_lessthan: int = 99,
-        solar_elongation: Sequence[int] = (0, 180),
-        max_hour_angle: int = 0,
+        solar_elongation: Sequence[float] = (0, 180),
+        max_hour_angle: float = 0,
         rate_cutoff: Optional[float] = None,
         skip_daylight: bool = False,
         refraction: bool = False,

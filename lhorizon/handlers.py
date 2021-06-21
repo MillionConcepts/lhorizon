@@ -25,10 +25,10 @@ def estimate_line_count(
     horizons_dt: MutableMapping[str, dt.datetime], seconds_per_step: float
 ):
     """
-    estimate the number of lines that will be returned by Horizons for a given
+    estimate number of lines that will be returned by _Horizons_ for a given
     query. Cannot give correct answers for cases in which airmass, hour
     angle, or other restrictive options are set. Used by bulk query
-    constructors to help split large queries across multiple LHorizons.
+    constructors to help split large queries across multiple `LHorizon`s.
     """
     return math.ceil(
         (horizons_dt["stop"] - horizons_dt["start"]).total_seconds()
@@ -48,8 +48,8 @@ HORIZON_TIME_ABBREVIATIONS = MappingProxyType(
 
 def chunk_time(epochs: MutableMapping, chunksize: int) -> list[dict]:
     """
-    chunk time into a series of intervals that will return at most chunksize
-    lines from Horizons.
+    chunk time into a series of intervals that will return at most `chunksize`
+    lines from _Horizons_.
     """
     horizons_dt = datetime_from_horizon_epochs(**epochs)
     # interpret stepsize-with-units as time and use it to calculate number of
@@ -91,7 +91,7 @@ def chunk_time(epochs: MutableMapping, chunksize: int) -> list[dict]:
 
 
 def datetime_from_horizon_epochs(start: str, stop: str, step: Union[int, str]):
-    """convert horizon epoch dict to datetime to estimate response length."""
+    """convert epoch dict to datetime in order to estimate response length."""
     return {"start": dtp.parse(start), "stop": dtp.parse(stop), "step": step}
 
 
@@ -105,14 +105,15 @@ def construct_lhorizon_list(
     chunksize=85000,
 ) -> list[LHorizon]:
     """
-    construct a list of LHorizons from a query. Intended for queries that will
-    return over 90000 lines, which is currently the hard limit of the Horizons
-    CGI. this function takes most of the same arguments as LHorizon, but
+    construct a list of `LHorizon`s. Intended for queries that will
+    return over 90000 lines, currently the hard limit of the _Horizons_
+    CGI. this function takes most of the same arguments as `LHorizon`, but
     epochs must be specified as a dictionary with times in ISO format.
-    this function does not support chunking long lists of explicitly-defined
-    individual epochs. queries of this type are extremely inefficient for the
-    Horizons backend and delivering many of them in quick succession typically
-    causes it to tightly throttle the requester.
+
+    NOTE: this function does not support chunking long lists of
+    explicitly-defined individual epochs. queries of this type are extremely
+    inefficient for _Horizons_ and delivering many of them in quick succession
+    typically causes it to tightly throttle the requester.
     """
     return [
         LHorizon(
@@ -131,9 +132,9 @@ def query_all_lhorizons(
     lhorizons: Sequence[LHorizon], delay_between=2, delay_retry=8
 ):
     """
-    queries all LHorizons in a passed sequence of LHorizons using a shared
+    queries a sequence of `LHorizon`s using a shared
     session, carefully closing sockets and pausing between them, regenerating
-    session and pausing for a longer interval if JPL Horizons rejects a query
+    session and pausing for a longer interval if _Horizons_ rejects a query
     """
     # TODO, maybe: add an attractive progress bar of some type
     session = default_lhorizon_session()
@@ -172,7 +173,7 @@ def query_all_lhorizons(
 
 def list_sites(center_body: int = 399) -> pd.DataFrame:
     """
-    query Horizons for all named sites recognized on the specified body and
+    query _Horizons_ for all named sites recognized on the specified body and
     format this response as a DataFrame. if no body is specified, uses Earth
     (399).
     """
