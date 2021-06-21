@@ -1,7 +1,7 @@
 loaders:
   - type: python
     search_path: ['../lhorizon']
-    ignore_when_discovered: ['examples', 'shiny_scratch', 'constants', 'tests', '_type_aliases']
+    ignore_when_discovered: ['examples', 'shiny_scratch', 'constants', 'tests', '_type_aliases', '__init__']
 processors:
   - type: filter
   - type: smart
