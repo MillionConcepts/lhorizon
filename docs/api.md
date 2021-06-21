@@ -683,7 +683,7 @@ def dt_to_jd(time: Union[dt.datetime, pd.Series]) -> Union[float, pd.Series]
 
 convert passed datetime or Series of datetime to julian day number (jd).
 algorithm derived from Julian Date article on scienceworld.wolfram.com,
-itself based on Danby, J. M., Fundamentals of Celestial Mechanics
+itself based on Danby, J. M., _Fundamentals of Celestial Mechanics_
 
 <a name="lhorizon_utils.numeric_columns"></a>
 #### numeric\_columns
@@ -711,20 +711,23 @@ mixed time formats or scales will likely produce undesired behavior.
 #### time\_series\_to\_et
 
 ```python
-def time_series_to_et(time_series)
+def time_series_to_et(time_series: Union[
+        str, Sequence[str], dt.datetime, Sequence[dt.datetime], pd.Series
+    ]) -> pd.Series
 ```
 
-convert time -> 'seconds since J2000' epoch scale preferred by SPICE --
-anything pandas
+convert time -> 'seconds since J2000' epoch scale preferred by SPICE.
+accepts anything `pandas` can cast to Series and interpret as datetime.
+Assumes input is in UTC time scale.
 
 <a name="lhorizon_utils.is_it"></a>
 #### is\_it
 
 ```python
-def is_it(*types)
+def is_it(*types: type) -> Callable[Any, bool]
 ```
 
-partially-evaluated predicate form of isinstance
+partially-evaluated predicate form of `isinstance`
 
 <a name="lhorizon_utils.sph2cart"></a>
 #### sph2cart
