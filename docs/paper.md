@@ -44,16 +44,17 @@ a module for querying _Horizons_ called  `jplhorizons`. This module, written pri
 is tightly integrated with _astroquery_. It uses _astroquery_’s session handlers and parsing system, and returns 
 results in _astropy_ tables. Unfortunately, we discovered that `jplhorizons` had experienced bitrot due to server-side 
 changes in _Horizons_ that broke functionality we specifically needed. We implemented workarounds, but discovered that 
-the performance of `jplhorizons` was inadequate for our use case. (We have since submitted  minimal workarounds for 
-the `jplhorizons` issues to _astroquery_.) _astroquery_’s parsers and _astropy_ tables are powerful, but this power 
-comes at a performance cost. The cost is irrelevant for many applications, but quite relevant for use cases with tens 
-to hundreds of thousands of data points per analysis. We wrote an entirely new response parser using only builtins, 
-_NumPy_, and _pandas_, resulting in performance improvements of 10-100x. `lhorizon`’s other features have grown from 
-there.
+the performance of `jplhorizons` was inadequate for our use case. _astroquery_’s parsers and _astropy_ tables are powerful,
+but this power comes at a performance cost. The cost is irrelevant for many applications, but quite relevant for use 
+cases with tens to hundreds of thousands of data points per analysis. We wrote an entirely new response parser using only builtins, 
+_NumPy_, and _pandas_, resulting in performance improvements of 10-100x. We submitted minimal workarounds for 
+the API issues to _astroquery_, but the changes we made in our fork were too extensive to be folded into 
+_astroquery_ via a PR -- especially because one of its core 'features' is divesting from _astropy_ objects and idioms.
+We named this fork `lhorizon` and have continued developing it as a distinct project.
 
 # Statement of Need
 
-JPL is the most authoritative producer of solar system ephemerides. Its geometry products are essential elements of 
+JPL is the most authoritative producer of solar system ep`hemerides. Its geometry products are essential elements of 
 academic and industrial work in planetary science, astronomy, geosciences, and many other fields. They are useful for 
 any application that makes use of artificial satellites or needs to know about the position of solar system bodies 
 (even “simple” quantities like the solar angle at an arbitrary Earth location). Their value as public resources is 
