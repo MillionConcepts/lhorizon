@@ -1,19 +1,18 @@
 ---
-title: 'lhorizon: planetary targeting via JPL _Horizons_'
+title: '`lhorizon`: geometry and targeting via JPL _Horizons_'
 tags:
   - Python
   - planetary science
   - ephemerides
 authors:
-  - name: Michael St. Clair
-   - orcid: 0000-0002-7877-3148
-   - affiliation: Million Concepts
+  - name: Michael St. Clair 
+    orcid: 0000-0002-7877-3148 
+    affiliation: Million Concepts
 affiliations:
  - name: Chief Technical Officer, Million Concepts
    index: 1
 date: 15 June 2021
 bibliography: paper.bib
-
 ---
 
 # Summary
@@ -97,4 +96,3 @@ calculations on JPL ephemerides are similar in application to `lhorizon` and sho
 # Acknowledgements
 
 This work was supported by a NASA Solar System Workings grant … blah blah blah 
-
