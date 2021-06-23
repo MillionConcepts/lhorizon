@@ -19,7 +19,7 @@ bibliography: paper.bib
 
 `lhorizon` helps you find where things are in the solar system. It is built around a thick Python wrapper for the Jet 
 Propulsion Laboratory (JPL) Solar System Dynamics Group  _Horizons_ service 
-[@horizons_website; @Giorgini_2015; @ssd_website].  _Horizons_ is the only system in the world that provides 
+[@Giorgini_2015].  _Horizons_ is the only system in the world that provides 
 ready-to-go, no-assembly-required access to geometry data for almost every object in the solar system.  Other 
 interfaces to _Horizons_ exist, but `lhorizon` is particularly optimized for stability and time-to-value for large 
 queries and for processing results with reference to arbitrary topocentric coordinate systems.
@@ -59,12 +59,12 @@ any application that makes use of artificial satellites or needs to know about t
 (even “simple” quantities like the solar angle at an arbitrary Earth location). Their value as public resources is 
 incalculable. Unfortunately, they are not always easy to use.
 
-JPL offers two automated interfaces to its geometry products: the SPICE toolkit [@naif_website] (developed by NAIF, 
+JPL offers two automated interfaces to its geometry products: the SPICE toolkit [@naif_spice_data] (developed by NAIF, 
 NASA's Navigation and Ancillary Information Facility) and _Horizons_. SPICE is very powerful but has an extremely high 
 barrier to entry. Using SPICE requires not only acquiring and configuring software, but also collecting the appropriate 
 data files, called “kernels.” Not counting automatically-generated kernels for minor bodies like asteroids, there are 
 tens of thousands of kernels; counting them, there are tens of millions. There is no central repository for kernels -- 
-NAIF’s website [@naif_spice_data] comes closest, but crucial kernels are scattered across hundreds of other Planetary 
+NAIF’s website comes closest, but crucial kernels are scattered across hundreds of other Planetary 
 Data System (PDS) archives.  Making kernels work together is challenging and requires scripting in a domain-specific 
 markup language. The SPICE “required reading” [@spice_required_reading] is dozens of chapters and hundreds of pages 
 long. SPICE is difficult for planetary scientists and specialized engineers, let alone nonspecialists who need quick 
