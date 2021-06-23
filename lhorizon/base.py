@@ -152,11 +152,9 @@ class LHorizon:
         if isinstance(origin, MutableMapping):
             origin = self._prep_geodetic_location(origin)
         self.location = origin
-        if query_type not in config.KNOWN_QUERY_TYPES:
+        if query_type not in ("VECTORS", "OBSERVER"):
             raise ValueError(
-                "only "
-                + str(config.KNOWN_QUERY_TYPES)
-                + " are understood as query types."
+                "only VECTORS and OBSERVER are supported as query types."
             )
         self.query_type = query_type
         self.epochs = self._prep_epochs(epochs)
