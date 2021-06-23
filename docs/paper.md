@@ -25,7 +25,7 @@ interfaces to _Horizons_ exist, but `lhorizon` is particularly optimized for sta
 queries and for processing results with reference to arbitrary topocentric coordinate systems.
 
 `lhorizon` offers a flexible, idiomatic, highly performant pseudo-API to _Horizons_ that returns data as standard 
-scientific Python objects (numpy `ndarrays` and `pandas` DataFrames). It provides special handling functions for bulk, 
+scientific Python objects (_NumPy_ `ndarrays` and _pandas_ DataFrames). It provides special handling functions for bulk, 
 chunked, and body-listing queries; it also includes an ancillary module, `lhorizon.targeter`, for finding the footprint 
 of an observer’s boresight or field of view in topocentric coordinates on target bodies.  
 
@@ -48,7 +48,7 @@ the performance of `jplhorizons` was inadequate for our use case. (We have since
 the `jplhorizons` issues to _astroquery_.) _astroquery_’s parsers and _astropy_ tables are powerful, but this power 
 comes at a performance cost. The cost is irrelevant for many applications, but quite relevant for use cases with tens 
 to hundreds of thousands of data points per analysis. We wrote an entirely new response parser using only builtins, 
-_numpy_, and _pandas_, resulting in performance improvements of 10-100x. `lhorizon`’s other features have grown from 
+_NumPy_, and _pandas_, resulting in performance improvements of 10-100x. `lhorizon`’s other features have grown from 
 there.
 
 # Statement of Need
