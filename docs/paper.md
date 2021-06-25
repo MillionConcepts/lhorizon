@@ -102,3 +102,5 @@ calculations on JPL ephemerides are similar in application to `lhorizon` and sho
 
 This work was supported by a NASA Solar System Workings grant, #NNX16AQ10G, and a NASA Solar System Observations 
 grant, #NNX17AF12G.
+
+# References
