@@ -53,7 +53,7 @@ but this power comes at a performance cost. The cost is irrelevant for many appl
 cases with tens to hundreds of thousands of data points per analysis. We wrote an entirely new response parser using only builtins, 
 _NumPy_, and _pandas_, resulting in performance improvements of 10-100x. We submitted minimal workarounds for 
 the API issues to _astroquery_, but the changes we made in our fork were too extensive to be folded into 
-_astroquery_ via a PR -- especially because one of its core 'features' is divesting from _astropy_ objects and idioms.
+_astroquery_ via a PR -- especially because removing _astropy_ objects and idioms was one of our major design goals.
 We named this fork `lhorizon` and have continued developing it as a distinct project.
 
 # Statement of Need
