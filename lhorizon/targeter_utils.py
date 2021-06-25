@@ -56,13 +56,17 @@ def array_reference_shift(
         # some common numpy workflows that might call this array create strided
         # arrays that the cspice backend chokes on. copying them makes them
         # contiguous in memory again.
+        if np.isnan(coordinate).any():
+            output_positions.append(np.array(np.repeat(np.nan, 5)))
+            continue
         output_coord = spice.mxv(transformation_matrix, coordinate.copy())
         [_, lon, lat] = spice.reclat(output_coord)
         output_coord = np.append(
             output_coord, [lon * spice.dpr(), lat * spice.dpr()]
         )
         output_positions.append(output_coord)
-
+    # feeding nan values to spice.reclat results in 0s; we want those values
+    # to be nan as well
     try:
         return np.vstack(output_positions)
     except ValueError:

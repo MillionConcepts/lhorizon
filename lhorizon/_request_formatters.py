@@ -79,7 +79,7 @@ def assemble_request_params(
     quantities: str,
     refraction: bool,
     refsystem: str,
-    solar_elongation: Sequence[int],
+    solar_elongation: Sequence[float],
 ) -> dict[str]:
     """final-stage assembler for Horizons CGI URL parameters"""
     return {

@@ -58,6 +58,7 @@ TABLE_PATTERNS = {
         r"Azi.*\(r-appr\)": "az_r",
         r"Elev.*\(r-appr\)": "alt_r",
         "delta": "dist",
+        r"Illu%": "illum",
         "ObsSub-LON": "sub_lon",
         "ObsSub-LAT": "sub_lat",
         "SunSub-LON": "sub_lon",

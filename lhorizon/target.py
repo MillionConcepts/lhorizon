@@ -16,7 +16,7 @@ class Targeter:
     def __init__(
         self,
         target: Ephemeris,
-        solutions: Mapping[Callable] = None,
+        solutions: Mapping[str, Callable] = None,
         target_radius: Optional[float] = None,
     ):
         """

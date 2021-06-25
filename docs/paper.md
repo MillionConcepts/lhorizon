@@ -8,10 +8,14 @@ authors:
   - name: Michael St. Clair 
     orcid: 0000-0002-7877-3148 
     affiliation: Million Concepts
+  - name: Matthew Siegler
+    affiliation: Lunar and Planetary Institute
 affiliations:
  - name: Chief Technical Officer, Million Concepts
    index: 1
-date: 15 June 2021
+ - name: Research Scientist, Planetary Science Institute
+   index: 2
+date: 25 June 2021
 bibliography: paper.bib
 ---
 
@@ -96,4 +100,5 @@ calculations on JPL ephemerides are similar in application to `lhorizon` and sho
 
 # Acknowledgements
 
-This work was supported by a NASA Solar System Workings grant … blah blah blah 
+This work was supported by a NASA Solar System Workings grant, #NNX16AQ10G, and a NASA Solar System Observations 
+grant, #NNX17AF12G.

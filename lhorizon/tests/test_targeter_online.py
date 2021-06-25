@@ -43,9 +43,9 @@ def test_targeter_wide_online():
 
     grid_len = 5
     ra_center_value = targeter.ephemerides["body"]["ra_app_icrf"].iloc[0]
-    ra_delta = 0.1
+    ra_delta = 0.17
     dec_center_value = targeter.ephemerides["body"]["dec_app_icrf"].iloc[0]
-    dec_delta = 0.1
+    dec_delta = 0.17
 
     ra_axis = np.array([ix * ra_delta for ix in np.arange(grid_len)])
     dec_axis = np.array([ix * dec_delta for ix in np.arange(grid_len)])
@@ -61,7 +61,7 @@ def test_targeter_wide_online():
 
     central_target = targeter.ephemerides["bodycentric"].iloc[12]
     sub_lon = targeter.ephemerides["body"]["sub_lon"].iloc[0]
-    if sub_lon > 0:
+    if sub_lon > 360:
         sub_lon = sub_lon - 360
     assert abs(central_target["lon"] - sub_lon) < 0.008
     assert (
