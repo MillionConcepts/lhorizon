@@ -1,3 +1,3 @@
-import setuptools
+from setuptools import setup, find_packages
 
-setuptools.setup(name="lhorizon", version="0.5.0a0")
+setup(name="lhorizon", version="0.5.0a0", packages=find_packages())
