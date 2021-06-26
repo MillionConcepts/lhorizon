@@ -1,4 +1,5 @@
 import datetime as dt
+import pytz
 import re
 from collections.abc import Callable, Sequence
 from functools import reduce
@@ -6,6 +7,7 @@ from math import floor
 from operator import or_
 from typing import Any, Optional, Pattern, Union
 
+import dateutil.parser as dtp
 import numpy as np
 import pandas as pd
 import pandas.api.types
@@ -98,6 +100,37 @@ LEAP_SECOND_THRESHOLDS = [
     dt.datetime(2015, 6, 30, tzinfo=dt.timezone.utc),
     dt.datetime(2016, 12, 31, tzinfo=dt.timezone.utc),
 ]
+
+
+def utc_to_tt_offset(time: dt.datetime) -> float:
+    """
+    return number of seconds necessary to advance UTC
+    to TT. we aren't presently supporting dates prior to 1972
+    because fractional leap second handling is another thing.
+    """
+    if time.year < 1972:
+        raise ValueError("dates prior to 1972 are not currently supported")
+    # this includes the horrible fractional leap seconds prior to 1972
+    # and the base 32.184 s offset between TAI and TT
+    offset = 42.184
+    for threshold in LEAP_SECOND_THRESHOLDS:
+        if time > threshold:
+            offset += 1
+    return offset
+
+
+def utc_to_tdb(time: Union[dt.datetime, str]) -> dt.datetime:
+    """
+    return time in tdb from passed time in utc. may in some cases be closer
+    to tt but offset should be no more than 2 ms in the worst case. only works
+    for times after 1972 because of fractional leap second handling. strings
+    are assumed to be in UTC timezone. passed datetimes must be timezone-aware.
+    """
+    if isinstance(time, str):
+        utc = pytz.timezone("UTC")
+        time = utc.localize(dtp.parse(time))
+    offset = dt.timedelta(seconds=utc_to_tt_offset(time))
+    return (offset + time).replace(tzinfo=None)
 
 
 def dt_to_jd(time: Union[dt.datetime, pd.Series]) -> Union[float, pd.Series]:
