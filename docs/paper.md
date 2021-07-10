@@ -7,9 +7,9 @@ tags:
 authors:
   - name: Michael St. Clair 
     orcid: 0000-0002-7877-3148 
-    affiliation: Million Concepts
+    affiliation: 1
   - name: Matthew Siegler
-    affiliation: Lunar and Planetary Institute
+    affiliation: 2
 affiliations:
  - name: Chief Technical Officer, Million Concepts
    index: 1
