@@ -43,7 +43,7 @@ If you're new to `conda` or Python environment management in general, please tak
  
 ### dependencies and requirements
 
-All explicit dependencies are listed in the environment.yml file in the root direcotry. Note that `lhorizon` requires 
+All explicit dependencies are listed in the environment.yml file in the root directory. Note that `lhorizon` requires 
 Python >= 3.9; there are no plans to implement support for older Python versions. Some dependencies are optional and
 could be omitted in restrictive install environments. Specifically: 
 * `jupyter` is only required to run examples
