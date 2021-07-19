@@ -1,4 +1,5 @@
 import datetime as dt
+import math
 import warnings
 
 import numpy as np
@@ -61,9 +62,11 @@ def test_targeter_wide_online():
 
     central_target = targeter.ephemerides["bodycentric"].iloc[12]
     sub_lon = targeter.ephemerides["body"]["sub_lon"].iloc[0]
-    if sub_lon > 360:
-        sub_lon = sub_lon - 360
-    assert abs(central_target["lon"] - sub_lon) < 0.008
+    assert math.isclose(
+        (central_target["lon"] + 360) % 360,
+        (sub_lon + 360) % 360,
+        abs_tol=0.008,
+    )
     assert (
         abs(
             central_target["lat"]
