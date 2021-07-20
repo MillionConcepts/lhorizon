@@ -39,7 +39,7 @@ jobs:
       - name: Upload code coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
-          file:.coverage.xml
+          file: .coverage.xml
           env_vars: OS,PYTHON
           name: codecov-umbrella
           fail_ci_if_error: false
