@@ -42,7 +42,7 @@ def test_retry_request_behavior(mocker):
     try:
         query_all_lhorizons(futile_lhorizon, delay_retry=0.1, max_retries=2)
     except TimeoutError:
-        assert abs((time.time() - start - 0.3)) < 0.05
+        assert time.time() - start > 0.3
         return
 
     raise ValueError("did not correctly halt on multiple retries")
