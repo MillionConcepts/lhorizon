@@ -8,7 +8,6 @@ import datetime as dt
 import math
 import re
 import time
-from types import MappingProxyType
 from typing import Union, Optional
 
 import dateutil.parser as dtp
@@ -18,6 +17,7 @@ import requests
 from more_itertools import chunked
 
 from lhorizon import LHorizon
+from lhorizon.constants import HORIZON_TIME_ABBREVIATIONS
 from lhorizon.lhorizon_utils import default_lhorizon_session
 
 
@@ -34,16 +34,6 @@ def estimate_line_count(
         (horizons_dt["stop"] - horizons_dt["start"]).total_seconds()
         / seconds_per_step
     )
-
-
-HORIZON_TIME_ABBREVIATIONS = MappingProxyType(
-    {
-        "m": 60,
-        "h": 60 * 60,
-        "d": 60 * 60 * 24,
-        "y": 60 * 60 * 24 * 365,
-    }
-)
 
 
 def chunk_time(epochs: MutableMapping, chunksize: int) -> list[dict]:
@@ -129,7 +119,10 @@ def construct_lhorizon_list(
 
 
 def query_all_lhorizons(
-    lhorizons: Sequence[LHorizon], delay_between=2, delay_retry=8
+    lhorizons: Sequence[LHorizon],
+    delay_between=2,
+    delay_retry=8,
+    max_retries=5,
 ):
     """
     queries a sequence of `LHorizon`s using a shared
@@ -142,16 +135,18 @@ def query_all_lhorizons(
         lhorizon.session = session
         lhorizon.prepare_request()
         logging.info(
-            "querying Horizons for LHorizon {} of {}".format(
-                str(ix + 1), str(len(lhorizons))
-            )
+            f"querying Horizons for LHorizon {ix+1} of {len(lhorizons)}"
         )
         lhorizon.query()
+        retries = 0
         while lhorizon.response.status_code != 200:
-            logging.info(
-                "response code {}, pausing before re-request".format(
-                    str(lhorizon.response.status_code)
+            if retries > max_retries:
+                raise TimeoutError(
+                    f"exceeded {max_retries}; retries aborting request."
                 )
+            logging.info(
+                f"response code {lhorizon.response.status_code}, "
+                f"pausing before retrying request"
             )
             lhorizon.session.close()
             time.sleep(delay_retry)
@@ -160,10 +155,10 @@ def query_all_lhorizons(
             lhorizon.session = default_lhorizon_session()
             lhorizon.prepare_request()
             lhorizon.query(refetch=True)
+            retries += 1
         logging.info(
-            "collected data from {} to {}".format(
-                lhorizon.epochs["start"], lhorizon.epochs["stop"]
-            )
+            f"collected data from {lhorizon.epochs['start']} "
+            f"to {lhorizon.epochs['stop']}"
         )
         # pausing for politeness
         if ix != len(lhorizons) - 1:

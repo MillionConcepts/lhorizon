@@ -2,14 +2,13 @@ import datetime as dt
 import re
 import warnings
 
-import numpy as np
 import pandas as pd
 import pytest
 
 from lhorizon import LHorizon
-from lhorizon.lhorizon_utils import numeric_columns, dt_to_jd
+from lhorizon.lhorizon_utils import dt_to_jd
 from lhorizon.tests.data.test_cases import TEST_CASES
-from lhorizon.tests.utilz import make_mock_query
+from lhorizon.tests.utilz import make_mock_query_from_test_case, numeric_closeness
 
 
 def test_prepare_request_1():
@@ -60,12 +59,10 @@ def test_reject_long_query():
 # that must be horrible
 def test_make_table_1(mocker):
     case = TEST_CASES["CYDONIA_PALM_SPRINGS_1959_TOPO"]
-    mock_query = make_mock_query(case)
+    mock_query = make_mock_query_from_test_case(case)
     mocker.patch.object(LHorizon, "query", mock_query)
     test_lhorizon = LHorizon(**case["init_kwargs"])
     table = test_lhorizon.table()
     saved_table = pd.read_csv(case["data_path"] + "_OBSERVER_table.csv")
-    assert np.allclose(
-        table[numeric_columns(table)].values,
-        saved_table[numeric_columns(saved_table)].values,
-    )
+    assert numeric_closeness(table, saved_table)
+

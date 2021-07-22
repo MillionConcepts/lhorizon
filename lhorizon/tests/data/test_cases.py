@@ -108,5 +108,22 @@ TEST_CASES = {
     "TRANQUILITY_2021": {
         "data_path": str(Path(Path(__file__).parent, "TRANQUILITY_2021")),
         "frames": ("j2000", "IAU_MOON")
+    },
+    "MARS_SUN_ANGLE_MINIMAL": {
+        "init_kwargs": {
+            "target": 10,
+            "origin": {
+                'lon': -77.5, 'lat': 18.4, 'elevation': 0, 'body': '499'
+            },
+            "epochs": {
+                'start': '2020-01-01T00:00:00',
+                'stop': '2023-02-01T00:00:00',
+                'step': '5d'
+            },
+            "chunksize": 50
+        },
+        "data_path": str(Path(Path(__file__).parent, "MARS_SUN_ANGLE_MINIMAL")),
+        "lhorizon_count": 5,
+        "use_columns": ["time", "az", "alt"]
     }
 }

@@ -12,6 +12,7 @@ class MockResponse:
     """
     a mock requests response
     """
+
     def __init__(
         self,
         content=None,
@@ -52,8 +53,18 @@ class MockResponse:
             return json.loads(self.content.decode("utf-8"))
 
 
-def make_mock_query(test_case, query_type_suffix="OBSERVER"):
+def make_mock_failing_query(status_code):
+    """mock wrapper for LHorizon.query() that returns status codes only"""
+
+    def mock_query(self, *args, **kwargs):
+        self.response = MockResponse(status_code=status_code)
+
+    return mock_query
+
+
+def make_mock_query_from_test_case(test_case, query_type_suffix="OBSERVER"):
     """mock wrapper for LHorizon.query()"""
+
     def mock_query(self, *args, **kwargs):
         with open(
             test_case["data_path"] + "_" + query_type_suffix, "rb"
@@ -86,10 +97,12 @@ def check_against_reference(case, query_type, test_df, test_table):
         ref_df = ref_df.drop(
             columns=["geo_lon", "geo_lat", "geo_el"], errors="ignore"
         )
-    assert np.allclose(
-        test_df[numeric_columns(test_df)], ref_df[numeric_columns(ref_df)]
-    )
-    assert np.allclose(
+    assert numeric_closeness(ref_df, test_df)
+    assert numeric_closeness(ref_table, test_table)
+
+
+def numeric_closeness(ref_table, test_table):
+    return np.allclose(
         test_table[numeric_columns(test_table)],
         ref_table[numeric_columns(ref_table)],
     )
