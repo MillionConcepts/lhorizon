@@ -3,6 +3,9 @@ import warnings
 import numpy as np
 import pandas as pd
 import pytest
+
+from lhorizon.tests.utilz import make_sure_this_fails, PointlessTargeter
+
 pytest.importorskip("sympy")
 
 from lhorizon import LHorizon
@@ -34,6 +37,21 @@ def test_find_targets_long():
         targeter.ephemerides["bodycentric"]["lat"],
         rtol=0.002,
     )
+
+
+def test_mismatched_target_rejection():
+    path = TEST_CASES["TRANQUILITY_2021"]["data_path"]
+    targeter = Targeter(
+        pd.read_csv(path + "_CENTER.csv"), solutions=lunar_solutions
+    )
+    targets = pd.read_csv(path + "_TARGET.csv")
+    make_sure_this_fails(
+        targeter.find_targets,
+        [targets.loc[:25]],
+        expected_error_type=AssertionError
+    )
+    targets["time"] = 3
+    make_sure_this_fails(targeter.find_targets, [targets])
 
 
 def test_find_targets_wide():
@@ -78,9 +96,6 @@ def test_find_targets_wide():
     )
 
 
-# TODO, maybe: clean all this edge case testing up a bit
-
-
 def test_trivial_casting_cases():
     cartesian = pd.DataFrame(
         {coord: list(range(10)) for coord in ("x", "y", "z")}
@@ -88,7 +103,6 @@ def test_trivial_casting_cases():
     assert (
         Targeter._coerce_df_cartesian(cartesian).eq(cartesian).all(axis=None)
     )
-
     # TODO, maybe: mock this more nicely?
     cartesian_lhorizon = LHorizon()
     cartesian_lhorizon.table = lambda: cartesian
@@ -107,7 +121,7 @@ def test_trivial_casting_cases():
 
 def test_things_that_should_not_work():
     for args in [
-        ["i'm a string!"],
+        ["i'm a string!", None, 10],
         [pd.DataFrame([1, 1], [1, 1]), None, None],
         [
             pd.DataFrame(
@@ -119,38 +133,25 @@ def test_things_that_should_not_work():
             {"x": lambda x0, y0, z0: "i swear this is the answer"},
         ],
     ]:
-        try:
-            Targeter(*args)
-            raise RuntimeError("that shouldn't have worked!")
-        except ValueError:
-            pass
-    dubious_lhorizon = LHorizon()
-    dubious_lhorizon.query_type = "GAZPACHO"
-    dubious_lhorizon.table = lambda: {'content': "i swear i am a table"}
-    try:
-        Targeter._coerce_lhorizon_cartesian(dubious_lhorizon)
-        raise RuntimeError("that shouldn't have worked!")
-    except ValueError:
-        pass
-
-    class PointlessTargeter:
-        def __init__(self):
-            self.ephemerides = {}
-
+        make_sure_this_fails(Targeter, args)
+    fake_lhorizon = LHorizon()
+    fake_lhorizon.query_type = "GAZPACHO"
+    fake_lhorizon.table = lambda: {"content": "i swear i am a table"}
+    make_sure_this_fails(Targeter._coerce_lhorizon_cartesian, [fake_lhorizon])
     lol_no = PointlessTargeter()
-    try:
-        Targeter.transform_targets_to_body_frame(lol_no)
-        raise RuntimeError("that shouldn't have worked!")
-    except ValueError:
-        pass
+    make_sure_this_fails(Targeter.transform_targets_to_body_frame, [lol_no])
+    make_sure_this_fails(Targeter.find_target_grid, [lol_no, {"dog", "cat"}])
+    make_sure_this_fails(
+        Targeter._coerce_pointing_ephemeris,
+        ["fish", "bear"],
+        expected_error_type=TypeError
+    )
     lol_no.ephemerides["topocentric"] = ["a real ephemeris i swear"]
     lol_no.ephemerides["body"] = pd.DataFrame(
         {"time": ["1991-01-01", "1992-02-02"]}
     )
-    try:
-        Targeter.transform_targets_to_body_frame(lol_no)
-        raise RuntimeError("that shouldn't have worked!")
-    except TypeError:
-        pass
-    except Exception:
-        raise RuntimeError("it should have broken a different way!")
+    make_sure_this_fails(
+        Targeter.transform_targets_to_body_frame,
+        [lol_no],
+        expected_error_type=TypeError,
+    )

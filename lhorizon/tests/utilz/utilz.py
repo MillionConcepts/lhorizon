@@ -106,3 +106,24 @@ def numeric_closeness(ref_table, test_table):
         test_table[numeric_columns(test_table)],
         ref_table[numeric_columns(ref_table)],
     )
+
+
+def make_sure_this_fails(
+    procedure, args=None, kwargs=None, expected_error_type=ValueError
+):
+    if args is None:
+        args = []
+    if kwargs is None:
+        kwargs = {}
+    try:
+        procedure(*args, **kwargs)
+        raise RuntimeError("that shouldn't have worked!")
+    except Exception as e:
+        assert isinstance(
+            e, expected_error_type
+        ), "that should have failed differently!"
+
+
+class PointlessTargeter:
+    def __init__(self):
+        self.ephemerides = {}

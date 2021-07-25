@@ -200,28 +200,22 @@ class Targeter:
                 "Please initialize topocentric targets with find_targets() "
                 "or a similar function before attempting a reference shift."
             )
-
-        try:
-            epochs_et = time_series_to_et(self.ephemerides["body"]["time"])
-        except ValueError:
-            epochs_et = time_series_to_et(
-                self.ephemerides["body"]["time"].astype("datetime64")
-            )
+        epochs_et = time_series_to_et(self.ephemerides["body"]["time"])
         # implicitly handling wide/grid case
         if (len(epochs_et) == 1) and (
-            len(self.ephemerides["topocentric"]) != 1
+                len(self.ephemerides["topocentric"]) != 1
         ):
             wide = True
             body_to_target_vectors = (
-                self.ephemerides["topocentric"][["x", "y", "z"]]
-                - self.ephemerides["body"][["x", "y", "z"]].iloc[0]
+                    self.ephemerides["topocentric"][["x", "y", "z"]]
+                    - self.ephemerides["body"][["x", "y", "z"]].iloc[0]
             )
 
         else:
             wide = False
             body_to_target_vectors = (
-                self.ephemerides["topocentric"][["x", "y", "z"]]
-                - self.ephemerides["body"][["x", "y", "z"]]
+                    self.ephemerides["topocentric"][["x", "y", "z"]]
+                    - self.ephemerides["body"][["x", "y", "z"]]
             )
         body_to_target_vectors[
             ["x", "y", "z", "lon", "lat"]
@@ -247,14 +241,14 @@ class Targeter:
             pointing_ephemeris = self._coerce_df_cartesian(pointings)
         else:
             raise TypeError
-        if "time" not in pointing_ephemeris.columns:
-            assert len(self.ephemerides["body"].index) == len(
+        assert len(self.ephemerides["body"].index) == len(
                 pointing_ephemeris.index
             ), (
                 "for find_targets(), pointing and body ephemerides must have "
                 "equal lengths. "
             )
 
+        if "time" not in pointing_ephemeris.columns:
             pointing_ephemeris["time"] = self.ephemerides["body"]["time"]
         else:
             if not (
