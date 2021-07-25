@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from lhorizon import LHorizon
 from lhorizon.constants import LUNAR_RADIUS
 from lhorizon.lhorizon_utils import make_raveled_meshgrid
 from lhorizon.solutions import make_ray_sphere_lambdas
@@ -73,3 +74,81 @@ def test_find_targets_wide():
         )
         < 0.005
     )
+
+
+# TODO, maybe: clean all this edge case testing up a bit
+
+
+def test_trivial_casting_cases():
+    cartesian = pd.DataFrame(
+        {coord: list(range(10)) for coord in ("x", "y", "z")}
+    )
+    assert (
+        Targeter._coerce_df_cartesian(cartesian).eq(cartesian).all(axis=None)
+    )
+
+    # TODO, maybe: mock this more nicely?
+    cartesian_lhorizon = LHorizon()
+    cartesian_lhorizon.table = lambda: cartesian
+    cartesian_lhorizon.query_type = "VECTORS"
+    assert (
+        Targeter._coerce_lhorizon_cartesian(cartesian_lhorizon)
+        .eq(cartesian)
+        .all(axis=None)
+    )
+
+    spherical = pd.DataFrame(
+        {coord: list(range(10)) for coord in ("dec", "ra")}
+    )
+    assert Targeter._coerce_df_cartesian(spherical)["dist"].iloc[0] == 1
+
+
+def test_things_that_should_not_work():
+    for args in [
+        ["i'm a string!"],
+        [pd.DataFrame([1, 1], [1, 1]), None, None],
+        [
+            pd.DataFrame(
+                {
+                    coord: list(range(10))
+                    for coord in ("aleph", "null", "tentacle")
+                }
+            ),
+            {"x": lambda x0, y0, z0: "i swear this is the answer"},
+        ],
+    ]:
+        try:
+            Targeter(*args)
+            raise RuntimeError("that shouldn't have worked!")
+        except ValueError:
+            pass
+    dubious_lhorizon = LHorizon()
+    dubious_lhorizon.query_type = "GAZPACHO"
+    dubious_lhorizon.table = lambda: {'content': "i swear i am a table"}
+    try:
+        Targeter._coerce_lhorizon_cartesian(dubious_lhorizon)
+        raise RuntimeError("that shouldn't have worked!")
+    except ValueError:
+        pass
+
+    class PointlessTargeter:
+        def __init__(self):
+            self.ephemerides = {}
+
+    lol_no = PointlessTargeter()
+    try:
+        Targeter.transform_targets_to_body_frame(lol_no)
+        raise RuntimeError("that shouldn't have worked!")
+    except ValueError:
+        pass
+    lol_no.ephemerides["topocentric"] = ["a real ephemeris i swear"]
+    lol_no.ephemerides["body"] = pd.DataFrame(
+        {"time": ["1991-01-01", "1992-02-02"]}
+    )
+    try:
+        Targeter.transform_targets_to_body_frame(lol_no)
+        raise RuntimeError("that shouldn't have worked!")
+    except TypeError:
+        pass
+    except Exception:
+        raise RuntimeError("it should have broken a different way!")

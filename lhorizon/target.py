@@ -9,7 +9,7 @@ from lhorizon import LHorizon
 from lhorizon._type_aliases import Ephemeris
 from lhorizon.lhorizon_utils import sph2cart, hats, time_series_to_et
 from lhorizon.solutions import make_ray_sphere_lambdas
-from lhorizon.targeter_utils import find_intersections, array_reference_shift
+from lhorizon.targeter_utils import array_reference_shift
 
 
 class Targeter:
@@ -233,21 +233,6 @@ class Targeter:
             wide,
         )
         self.ephemerides["bodycentric"] = body_to_target_vectors
-
-    def _make_intersection_row(
-        self, ix: int, pointing_row: pd.Series, body_row: pd.Series
-    ):
-        """
-        make a clearly-labeled row of intersections. should not be called
-        directly.
-        """
-        intersection = find_intersections(
-            self.solutions,
-            pointing_row[["x", "y", "z"]],
-            body_row[["x", "y", "z"]],
-        )
-        intersection["ix"] = ix
-        return intersection
 
     def _coerce_pointing_ephemeris(
         self, pointings: Union[pd.DataFrame, LHorizon]
