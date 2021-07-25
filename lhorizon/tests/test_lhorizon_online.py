@@ -44,6 +44,15 @@ def test_full_retrieval(case_name, query_type):
     logging.getLogger().info(str(test_lhorizon) + " retrieved")
 
 
+def test_bad_request():
+    apocrypha = LHorizon("Arisia", "Velantia III")
+    try:
+        apocrypha.table()
+        raise RuntimeError("that shouldn't have worked!")
+    except ValueError:
+        pass
+
+
 def test_random_reflexive_pointing():
     # is a sub-Cydonia point on the Moon in fact looking back at Cydonia?
     somewhere_in_cydonia = {
