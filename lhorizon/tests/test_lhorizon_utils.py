@@ -3,6 +3,7 @@ import re
 
 import numpy as np
 import pandas as pd
+from more_itertools import chunked
 
 from lhorizon.lhorizon_utils import (
     hats,
@@ -10,7 +11,7 @@ from lhorizon.lhorizon_utils import (
     sph2cart,
     hunt_csv,
     snorm,
-    listify,
+    listify, cart2sph,
 )
 
 rng = np.random.default_rng()
@@ -47,7 +48,16 @@ def test_sph2cart():
     assert math.isclose(up[2], 1, abs_tol=1e-9)
 
 
-def test_hunt_csv():
+def test_roundtrip_transform():
+    cart = rng.integers(0, 10, 3)
+    assert np.allclose(cart, sph2cart(*cart2sph(*cart)))
+    sph = np.array([
+        rng.integers(-90, 90), rng.integers(0, 359), rng.integers(1, 100)
+    ])
+    assert np.allclose(sph, cart2sph(*sph2cart(*sph)))
+
+
+def test_hunt_csv_1():
     raining = re.compile(r"(?<=cats).*(?=dogs)")
     some_csv = "catssomething,something_else,1,2dogs"
     assert hunt_csv(raining, some_csv) == [
@@ -58,11 +68,35 @@ def test_hunt_csv():
     ]
 
 
-def test_snorm():
+def test_hunt_csv_2():
+    ints = rng.integers(0, 100, 8)
+    breaks = rng.choice(("\r", "\n", "\r\n"), 3)
+    block = (
+        f"alpha{ints[0]},{ints[1]}{breaks[0]}"
+        f"{ints[2]},{ints[3]}{breaks[1]}{ints[4]},{ints[5]}{breaks[2]}"
+        f"{ints[6]},{ints[7]}beta"
+    )
+    table = hunt_csv(re.compile(r"(?<=alpha).*(?=beta)", re.M + re.S), block)
+    table = list([list(map(int, line)) for line in table])
+    assert list(map(sum, table)) == list(map(sum, chunked(ints, 2)))
+
+
+def test_snorm_1():
     thing = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     normed = snorm(thing, 0, 1, 2, 9)
     assert math.isclose(normed[1], 0)
     assert math.isclose(normed[8], 1)
+
+
+def test_snorm_2():
+    thing = rng.normal(rng.integers(-1000, 1000), rng.integers(1, 100), 100000)
+    # this will fail about one in ten million times.
+    assert abs(np.mean(snorm(thing)) - 0.5) < 0.11
+
+
+def test_snorm_3():
+    number = rng.integers(-1000, 1000)
+    assert math.isclose(snorm(number, 0, 1, 0, number * 2), 0.5)
 
 
 def test_listify():
@@ -70,3 +104,4 @@ def test_listify():
     assert isinstance(listify([1, 2, 3, 4]), list)
     assert isinstance(listify(1), list)
     assert isinstance(listify(map(sum, [(1, 2, 3), (1, 2, 3)])), list)
+

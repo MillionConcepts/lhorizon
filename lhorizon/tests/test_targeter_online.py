@@ -18,7 +18,7 @@ rng = np.random.default_rng()
 
 
 def test_targeter_long_online():
-    start = rng.integers(2440000, 2460000)
+    start = rng.integers(2441318, 2460000)
     epochs = [start + ix / 10 for ix in range(10)]
     targeter = Targeter(
         LHorizon(301, epochs=epochs), solutions=lunar_solutions
@@ -29,12 +29,12 @@ def test_targeter_long_online():
     assert np.allclose(
         targeter.ephemerides["pointing"]["geo_lon"],
         targeter.ephemerides["bodycentric"]["lon"],
-        rtol=0.002,
+        rtol=0.001,
     )
     assert np.allclose(
         targeter.ephemerides["pointing"]["geo_lat"],
         targeter.ephemerides["bodycentric"]["lat"],
-        rtol=0.002,
+        rtol=0.001,
     )
 
 

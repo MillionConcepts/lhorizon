@@ -1,10 +1,10 @@
 import datetime as dt
 import pytz
 import re
-from collections.abc import Callable, Sequence
-from functools import reduce
+from collections.abc import Callable, Iterable, Sequence
+from functools import reduce, partial
 from math import floor
-from operator import or_
+from operator import or_, and_, contains
 from typing import Any, Optional, Pattern, Union
 
 import dateutil.parser as dtp
@@ -16,11 +16,14 @@ from numpy.linalg import norm
 
 from lhorizon import config as config
 from lhorizon._type_aliases import Array, Timelike
+from lhorizon.constants import LEAP_SECOND_THRESHOLDS, DT_J2000_TDB
 
 
 def listify(thing: Any) -> list:
     """Always a list, for things that want lists. use with care."""
-    if isinstance(thing, str) or (not isinstance(thing, Sequence)):
+    if isinstance(thing, str) or (
+        (not isinstance(thing, Sequence) and (not isinstance(thing, Iterable)))
+    ):
         return [thing]
     return list(thing)
 
@@ -59,8 +62,8 @@ def hunt_csv(regex: Pattern, body: str) -> list:
     worse than StringIO -> numpy or pandas csv reader in other cases.
     """
     csv_string = re.search(regex, body)[0]
-    if r"\n" in csv_string:
-        lines = csv_string.split(r"\n")
+    if are_in(["\r", "\n"], or_)(csv_string):
+        lines = re.split(r"[\r\n]+", csv_string)
         processed_lines = []
         for line in lines:
             csv_fields = line.split(",")
@@ -71,35 +74,27 @@ def hunt_csv(regex: Pattern, body: str) -> list:
     return [field.strip() for field in csv_fields]
 
 
-LEAP_SECOND_THRESHOLDS = [
-    dt.datetime(1972, 6, 30, tzinfo=dt.timezone.utc),
-    dt.datetime(1972, 12, 31, tzinfo=dt.timezone.utc),
-    dt.datetime(1973, 12, 31, tzinfo=dt.timezone.utc),
-    dt.datetime(1974, 12, 31, tzinfo=dt.timezone.utc),
-    dt.datetime(1975, 12, 31, tzinfo=dt.timezone.utc),
-    dt.datetime(1976, 12, 31, tzinfo=dt.timezone.utc),
-    dt.datetime(1977, 12, 31, tzinfo=dt.timezone.utc),
-    dt.datetime(1978, 12, 31, tzinfo=dt.timezone.utc),
-    dt.datetime(1979, 12, 31, tzinfo=dt.timezone.utc),
-    dt.datetime(1981, 6, 30, tzinfo=dt.timezone.utc),
-    dt.datetime(1982, 6, 30, tzinfo=dt.timezone.utc),
-    dt.datetime(1983, 6, 30, tzinfo=dt.timezone.utc),
-    dt.datetime(1985, 6, 30, tzinfo=dt.timezone.utc),
-    dt.datetime(1987, 12, 31, tzinfo=dt.timezone.utc),
-    dt.datetime(1989, 12, 31, tzinfo=dt.timezone.utc),
-    dt.datetime(1990, 12, 31, tzinfo=dt.timezone.utc),
-    dt.datetime(1992, 6, 30, tzinfo=dt.timezone.utc),
-    dt.datetime(1993, 6, 30, tzinfo=dt.timezone.utc),
-    dt.datetime(1994, 6, 30, tzinfo=dt.timezone.utc),
-    dt.datetime(1995, 12, 31, tzinfo=dt.timezone.utc),
-    dt.datetime(1997, 6, 30, tzinfo=dt.timezone.utc),
-    dt.datetime(1998, 12, 31, tzinfo=dt.timezone.utc),
-    dt.datetime(2005, 12, 31, tzinfo=dt.timezone.utc),
-    dt.datetime(2008, 12, 31, tzinfo=dt.timezone.utc),
-    dt.datetime(2012, 6, 30, tzinfo=dt.timezone.utc),
-    dt.datetime(2015, 6, 30, tzinfo=dt.timezone.utc),
-    dt.datetime(2016, 12, 31, tzinfo=dt.timezone.utc),
-]
+def are_in(items: Iterable, oper: Callable = and_) -> Callable:
+    """
+    iterable -> function
+    returns function that checks if its single argument contains all
+    (or by changing oper, perhaps any) items
+    """
+
+    def in_it(container: Iterable) -> bool:
+        inclusion = partial(contains, container)
+        return reduce(oper, map(inclusion, items))
+
+    return in_it
+
+
+def is_it(*types: type) -> Callable[Any, bool]:
+    """partially-evaluated predicate form of `isinstance`"""
+
+    def it_is(whatever: Any):
+        return isinstance(whatever, types)
+
+    return it_is
 
 
 def utc_to_tt_offset(time: dt.datetime) -> float:
@@ -111,7 +106,7 @@ def utc_to_tt_offset(time: dt.datetime) -> float:
     if time.year < 1972:
         raise ValueError("dates prior to 1972 are not currently supported")
     # this includes the horrible fractional leap seconds prior to 1972
-    # and the base 32.184 s offset between TAI and TT
+    # and the base 32.184s offset between TAI and TT
     offset = 42.184
     for threshold in LEAP_SECOND_THRESHOLDS:
         if time > threshold:
@@ -121,10 +116,11 @@ def utc_to_tt_offset(time: dt.datetime) -> float:
 
 def utc_to_tdb(time: Union[dt.datetime, str]) -> dt.datetime:
     """
-    return time in tdb from passed time in utc. may in some cases be closer
-    to tt but offset should be no more than 2 ms in the worst case. only works
-    for times after 1972 because of fractional leap second handling. strings
-    are assumed to be in UTC timezone. passed datetimes must be timezone-aware.
+    return time in tdb / jpl horizons coordinate time from passed time in utc.
+    may in some cases be closer to tt, but offset should be no more than 2 ms
+    in the worst case. only works for times after 1972 because of fractional
+    leap second handling. strings are assumed to be in UTC+0. passed datetimes
+    must be timezone-aware.
     """
     if isinstance(time, str):
         utc = pytz.timezone("UTC")
@@ -184,9 +180,6 @@ def produce_jd_series(
         return dt_to_jd(epochs.astype("datetime64"))
 
 
-DT_J2000 = dt.datetime(2000, 1, 1, 11, 58, 55, 816000)
-
-
 def time_series_to_et(
     time_series: Union[
         str, Sequence[str], dt.datetime, Sequence[dt.datetime], pd.Series
@@ -195,20 +188,16 @@ def time_series_to_et(
     """
     convert time -> 'seconds since J2000' epoch scale preferred by SPICE.
     accepts anything `pandas` can cast to Series and interpret as datetime.
-    Assumes input is in UTC time scale.
+    if not timezone-aware, assumes input is in UTC.
     """
     if not isinstance(time_series, pd.Series):
         time_series = pd.Series(listify(time_series))
-    return (time_series.astype("datetime64") - DT_J2000).dt.total_seconds()
-
-
-def is_it(*types: type) -> Callable[Any, bool]:
-    """partially-evaluated predicate form of `isinstance`"""
-
-    def it_is(whatever: Any):
-        return isinstance(whatever, types)
-
-    return it_is
+    time_series = time_series.astype("datetime64")
+    if time_series.iloc[0].tzinfo is None:
+        utc = pytz.timezone("UTC")
+        time_series = time_series.map(utc.localize)
+    tdb_times = time_series.map(utc_to_tdb)
+    return (tdb_times - DT_J2000_TDB).dt.total_seconds()
 
 
 def sph2cart(
@@ -222,6 +211,10 @@ def sph2cart(
     by default; pass unit="radians" to specify input in radians. if passed any
     arraylike objects, returns a DataFrame, otherwise, returns a tuple of
     values.
+
+    caveats:
+    1. this assumes a coordinate convention in which latitude runs from -90
+        to 90 degrees.
     """
     if unit == "degrees":
         lat = np.radians(lat)
@@ -248,9 +241,18 @@ def cart2sph(
     convert cartesian to spherical coordinates. returns degrees by default;
     pass unit="radians" to return radians. if passed any arraylike objects,
     returns a DataFrame, otherwise, returns a tuple of values.
+
+    caveats:
+    1. this assumes a coordinate convention in which latitude runs from -90
+        to 90 degrees.
+    2. returns longitude in strictly positive coordinates.
     """
     radius = np.sqrt(x0 ** 2 + y0 ** 2 + z0 ** 2)
-    longitude = np.arctan(y0 / x0)
+    if x0 != 0:
+        longitude = np.arctan2(y0, x0)
+    else:
+        longitude = np.pi / 2
+    longitude = longitude % (np.pi * 2)
     latitude = np.arcsin(z0 / np.sqrt(x0 ** 2 + y0 ** 2 + z0 ** 2))
     if unit == "degrees":
         latitude = np.degrees(latitude)
