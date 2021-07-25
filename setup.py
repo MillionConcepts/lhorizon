@@ -11,14 +11,14 @@ setup(
     install_requires=[
         "numpy",
         "more-itertools",
-        "sympy",
-        "jupyter",
-        "pytest",
-        "pytest-mock",
         "requests",
         "pandas",
-        "spiceypy",
     ],
+    extras_require={
+        "tests": ["pytest", "pytest-mock", "pytest-cov"],
+        "target": ["spiceypy", "sympy"],
+        "examples": ["jupyter"]
+    },
     package_data={
         "": ["kernels/*.*", "tests/data/*.*"],
     },
