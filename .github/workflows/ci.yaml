@@ -34,7 +34,7 @@ jobs:
 
       - name: Run Tests
         shell: bash -l {0}
-        run: pytest --cov=lhorizon --cov-report xml:.coverage.xml
+        run: pytest --cov-config=.coveragerc --cov=lhorizon --cov-report xml:.coverage.xml
 
       - name: Upload code coverage to Codecov
         uses: codecov/codecov-action@v2
