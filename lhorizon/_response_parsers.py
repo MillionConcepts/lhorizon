@@ -89,7 +89,9 @@ def clean_up_observer_series(
     """
     if pattern == r"Date_+\(UT\)":
         return pd.Series([dtp.parse(instant) for instant in series])
-    if pattern.startswith(("R.A.", "DEC", "Azi", "Elev", "RA", "NP", "Obs")):
+    if pattern.startswith(
+            ("R.A.", "DEC", "Azi", "Elev", "RA", "NP", "Obs", "T-O-M")
+    ):
         if isinstance(series.iloc[0], str):
             # "n. a." values for locations that this quantity is not
             # meaningful or calculable for
@@ -104,15 +106,9 @@ def clean_up_observer_series(
         return pd.Series(
             [AU_TO_M * delta for delta in series.astype(np.float64)]
         )
-    if pattern in ["ObsSub-LON", "ObsSub-LAT"]:
-        return series.astype(np.float64)
     if pattern == "Ang-diam":
         # convert from arcseconds to degree
         return series.astype(np.float64) / 3600
-    # only present for lunar ephemerides with selenographic coords
-    # specified
-    if pattern == "T-O-M":
-        return series.astype(np.float64)
     # only present for ephemerides with planetographic coords specified
     if pattern in ["geo_lat", "geo_lon", "geo_el"]:
         return series.astype(np.float64)
