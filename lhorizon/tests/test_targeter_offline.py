@@ -2,6 +2,8 @@ import warnings
 
 import numpy as np
 import pandas as pd
+import pytest
+pytest.importorskip("sympy")
 
 from lhorizon import LHorizon
 from lhorizon.constants import LUNAR_RADIUS

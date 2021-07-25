@@ -1,0 +1,12 @@
+name: lhorizon-minimal
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - more-itertools
+  - numpy
+  - python=3.9
+  - pandas
+  - pytest
+  - pytest-mock
+  - requests
