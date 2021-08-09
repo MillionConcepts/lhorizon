@@ -65,7 +65,7 @@ you are planning to process extremely large sets of geometry data.
 
 ## usage
 
-The Jupyter Notebooks provided in the [lhorizon/examples](lhorizon/examples) directory are the best quick-start guides 
+The Jupyter Notebooks provided in the [lhorizon/examples](https://nbviewer.jupyter.org/github/MillionConcepts/lhorizon/tree/main/lhorizon/examples/) directory are the best quick-start guides 
 to usage. See the [API reference](docs/api.md) for more details on the package's behavior.
 
 ## changelog
