@@ -1,4 +1,4 @@
-name: lhorizon-minimal
+name: lhorizon
 channels:
   - conda-forge
   - defaults
