@@ -17,12 +17,12 @@ workflows.
 ### origin
 
 `lhorizon` began as a fork of [astroquery.jplhorizons](https://github.com/astropy/astroquery/tree/master/astroquery/jplhorizons) 
-(originally written by Michael Mommert around 2016). I wrote it in order to circumvent a bug introduced to `jplhorizons` by 
+(originally written by Michael Mommert around 2016). We wrote it in order to circumvent a bug introduced to `jplhorizons` by 
 serverside changes at JPL that prevented it from correctly parsing queries involving target or observer locations given 
 in planetodetic coordinates, and more specifically to provide suppport for queries related to arbitrary locations on 
-the lunar surface. In the process I extended it to implement a more efficient parser, add support for fast queries in 
+the lunar surface. In the process, we extended it to implement a more efficient parser, add support for fast queries in 
 bulk, and remove the use of `astroquery` and `astropy` features (in particular, `astropy` tables are very powerful, but 
-too slow for the applications I wrote this for). At some point, I realized that a fast, standalone interface to 
+too slow for the applications we wrote this for). At some point, we realized that a fast, standalone interface to 
 Horizons might be useful to the community at large and decided to polish it into a general-use package.
 
 ### pronunciation
