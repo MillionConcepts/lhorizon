@@ -46,11 +46,17 @@ If you're new to `conda` or Python environment management in general, please tak
  
 ### dependencies and requirements
 
-All explicit dependencies are listed in the environment.yml file in the root directory. Note that `lhorizon` requires 
-Python >= 3.9; there are no plans to implement support for older Python versions. Some dependencies are optional and
-could be omitted in restrictive install environments. Specifically: 
+`lhorizon` requires Python >= 3.9 (there are no plans to implement support for older Python versions).
+
+the following packages are required for usage:
+* `more-itertools`
+* `numpy`
+* `pandas`
+* `requests`
+
+the following dependencies are optional and could potentially be omitted in restrictive install environments: 
 * `jupyter` is only required to run examples
-* `pytest` and `pytest-mock` are only required to run tests
+* `pytest`, `pytest-cov`, and `pytest-mock` are only required to run tests
 * `spiceypy` and `sympy` are only required for `lhorizon.target` and related tests and examples
 
 Some features of `lhorizon` can be used without internet connectivity, but much of the library requires you to be able
