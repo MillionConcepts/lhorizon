@@ -2,6 +2,7 @@
 
 [![CI](https://img.shields.io/github/workflow/status/MillionConcepts/lhorizon/CI?logo=github)](https://github.com/MillionConcepts/lhorizon/actions)
 [![codecov](https://codecov.io/gh/MillionConcepts/lhorizon/branch/main/graph/badge.svg)](https://codecov.io/gh/MillionConcepts/lhorizon)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/MillionConcepts/lhorizon/main?filepath=lhorizon%2Fexamples)
 
 ## introduction
 
