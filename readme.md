@@ -73,12 +73,13 @@ you are planning to process extremely large sets of geometry data.
 ## usage
 
 The Jupyter Notebooks provided in the [examples](https://nbviewer.jupyter.org/github/MillionConcepts/lhorizon/tree/main/examples/) 
-directory are the best quick-start guides to usage. See the [API reference](docs/api.md) for more details on the 
-package's behavior.
+directory are the best quick-start guides to usage. You can also [try these examples out on Binder.](https://mybinder.org/v2/gh/MillionConcepts/lhorizon/main?filepath=examples)
+
+See the [API reference](docs/api.md) for more details on the package's behavior.
 
 ## tests
 
-tests can be found in the [lhorizon/tests](lhorizon/tests) module. You can run them simply by executing `pytest` 
+tests can be found in the [lhorizon.tests](lhorizon/tests) module. You can run them simply by executing `pytest` 
 at the command line from the repository root directory.
 
 ## changelog
