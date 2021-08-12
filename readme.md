@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/github/workflow/status/MillionConcepts/lhorizon/CI?logo=github)](https://github.com/MillionConcepts/lhorizon/actions)
 [![codecov](https://codecov.io/gh/MillionConcepts/lhorizon/branch/main/graph/badge.svg)](https://codecov.io/gh/MillionConcepts/lhorizon)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/MillionConcepts/lhorizon/main?filepath=lhorizon%2Fexamples)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/MillionConcepts/lhorizon/main?filepath=examples)
 
 ## introduction
 
@@ -72,8 +72,9 @@ you are planning to process extremely large sets of geometry data.
 
 ## usage
 
-The Jupyter Notebooks provided in the [lhorizon/examples](https://nbviewer.jupyter.org/github/MillionConcepts/lhorizon/tree/main/lhorizon/examples/) directory are the best quick-start guides 
-to usage. See the [API reference](docs/api.md) for more details on the package's behavior.
+The Jupyter Notebooks provided in the [examples](https://nbviewer.jupyter.org/github/MillionConcepts/lhorizon/tree/main/examples/) 
+directory are the best quick-start guides to usage. See the [API reference](docs/api.md) for more details on the 
+package's behavior.
 
 ## changelog
 
@@ -83,7 +84,7 @@ to usage. See the [API reference](docs/api.md) for more details on the package's
     * reasonably complete test coverage and documentation
     * somewhat more extensive example Notebooks
 
-## cautions / known errors
+## cautions / known issues
 
 * do not execute multiple queries to _Horizons_ in parallel using multiprocessing or other 
   techniques, manual or programmatic. This is a requirement of _Horizons_, not `lhorizon`: JPL has not designed 
