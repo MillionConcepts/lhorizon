@@ -1,4 +1,4 @@
-name: publish to pypi
+name: publish to testpypi
 on: workflow_dispatch
 
 jobs:
@@ -25,7 +25,8 @@ jobs:
         run: |
           conda activate lhorizon
           python -m build --sdist --wheel --outdir dist/
-      - name: Publish distribution to PyPI
+      - name: publish to TestPyPI
         uses: pypa/gh-action-pypi-publish@master
         with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
