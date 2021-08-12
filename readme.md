@@ -2,6 +2,7 @@
 
 [![CI](https://img.shields.io/github/workflow/status/MillionConcepts/lhorizon/CI?logo=github)](https://github.com/MillionConcepts/lhorizon/actions)
 [![codecov](https://codecov.io/gh/MillionConcepts/lhorizon/branch/main/graph/badge.svg)](https://codecov.io/gh/MillionConcepts/lhorizon)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/MillionConcepts/lhorizon/main?filepath=lhorizon%2Fexamples)
 
 ## introduction
 
@@ -17,12 +18,12 @@ workflows.
 ### origin
 
 `lhorizon` began as a fork of [astroquery.jplhorizons](https://github.com/astropy/astroquery/tree/master/astroquery/jplhorizons) 
-(originally written by Michael Mommert around 2016). I wrote it in order to circumvent a bug introduced to `jplhorizons` by 
+(originally written by Michael Mommert around 2016). We wrote it in order to circumvent a bug introduced to `jplhorizons` by 
 serverside changes at JPL that prevented it from correctly parsing queries involving target or observer locations given 
 in planetodetic coordinates, and more specifically to provide suppport for queries related to arbitrary locations on 
-the lunar surface. In the process I extended it to implement a more efficient parser, add support for fast queries in 
+the lunar surface. In the process, we extended it to implement a more efficient parser, add support for fast queries in 
 bulk, and remove the use of `astroquery` and `astropy` features (in particular, `astropy` tables are very powerful, but 
-too slow for the applications I wrote this for). At some point, I realized that a fast, standalone interface to 
+too slow for the applications we wrote this for). At some point, we realized that a fast, standalone interface to 
 Horizons might be useful to the community at large and decided to polish it into a general-use package.
 
 ### pronunciation
@@ -46,11 +47,17 @@ If you're new to `conda` or Python environment management in general, please tak
  
 ### dependencies and requirements
 
-All explicit dependencies are listed in the environment.yml file in the root directory. Note that `lhorizon` requires 
-Python >= 3.9; there are no plans to implement support for older Python versions. Some dependencies are optional and
-could be omitted in restrictive install environments. Specifically: 
+`lhorizon` requires Python >= 3.9 (there are no plans to implement support for older Python versions).
+
+the following packages are required for usage:
+* `more-itertools`
+* `numpy`
+* `pandas`
+* `requests`
+
+the following dependencies are optional and could potentially be omitted in restrictive install environments: 
 * `jupyter` is only required to run examples
-* `pytest` and `pytest-mock` are only required to run tests
+* `pytest`, `pytest-cov`, and `pytest-mock` are only required to run tests
 * `spiceypy` and `sympy` are only required for `lhorizon.target` and related tests and examples
 
 Some features of `lhorizon` can be used without internet connectivity, but much of the library requires you to be able
@@ -65,7 +72,7 @@ you are planning to process extremely large sets of geometry data.
 
 ## usage
 
-The Jupyter Notebooks provided in the [lhorizon/examples](lhorizon/examples) directory are the best quick-start guides 
+The Jupyter Notebooks provided in the [lhorizon/examples](https://nbviewer.jupyter.org/github/MillionConcepts/lhorizon/tree/main/lhorizon/examples/) directory are the best quick-start guides 
 to usage. See the [API reference](docs/api.md) for more details on the package's behavior.
 
 ## changelog

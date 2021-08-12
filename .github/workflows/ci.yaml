@@ -10,36 +10,19 @@ on:
 
 jobs:
   build:
-    name: ${{ matrix.os }} py${{ matrix.python-version }}
+    name: ${{ matrix.os }} py${{ matrix.python-version }} ${{ matrix.environment-file }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: ["3.9"]
+        environment-file: ["environment.yml", ".minimal-environment.yml"]
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
-          environment-file: .minimal-environment.yml
-          activate-environment: lhorizon-minimal
-          auto-update-conda: false
-          python-version: ${{ matrix.python-version }}
-
-      - name: Set up minimal conda environment
-        shell: bash -l {0}
-        run: |
-          python -m pip install -e .
-          conda list
-
-      - name: Run Tests with minimal environment
-        shell: bash -l {0}
-        run: pytest
-
-      - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          environment-file: environment.yml
+          environment-file: ${{ matrix.environment-file }}
           activate-environment: lhorizon
           auto-update-conda: false
           python-version: ${{ matrix.python-version }}
