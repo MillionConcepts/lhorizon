@@ -12,6 +12,7 @@
   * [lambdify\_system](#solutions.lambdify_system)
   * [make\_ray\_sphere\_lambdas](#solutions.make_ray_sphere_lambdas)
 * [config](#config)
+* [dscratch](#dscratch)
 * [\_request\_formatters](#_request_formatters)
   * [format\_geodetic\_origin](#_request_formatters.format_geodetic_origin)
   * [format\_geodetic\_target](#_request_formatters.format_geodetic_target)
@@ -28,7 +29,6 @@
     * [\_\_str\_\_](#base.LHorizon.__str__)
     * [\_\_repr\_\_](#base.LHorizon.__repr__)
 * [targeter\_utils](#targeter_utils)
-  * [find\_intersections](#targeter_utils.find_intersections)
   * [array\_reference\_shift](#targeter_utils.array_reference_shift)
 * [target](#target)
   * [Targeter](#target.Targeter)
@@ -44,25 +44,32 @@
   * [query\_all\_lhorizons](#handlers.query_all_lhorizons)
   * [list\_sites](#handlers.list_sites)
   * [list\_majorbodies](#handlers.list_majorbodies)
+  * [get\_observer\_quantity\_codes](#handlers.get_observer_quantity_codes)
 * [lhorizon\_utils](#lhorizon_utils)
   * [listify](#lhorizon_utils.listify)
   * [snorm](#lhorizon_utils.snorm)
   * [hunt\_csv](#lhorizon_utils.hunt_csv)
+  * [are\_in](#lhorizon_utils.are_in)
+  * [is\_it](#lhorizon_utils.is_it)
+  * [utc\_to\_tt\_offset](#lhorizon_utils.utc_to_tt_offset)
+  * [utc\_to\_tdb](#lhorizon_utils.utc_to_tdb)
   * [dt\_to\_jd](#lhorizon_utils.dt_to_jd)
   * [numeric\_columns](#lhorizon_utils.numeric_columns)
   * [produce\_jd\_series](#lhorizon_utils.produce_jd_series)
   * [time\_series\_to\_et](#lhorizon_utils.time_series_to_et)
-  * [is\_it](#lhorizon_utils.is_it)
   * [sph2cart](#lhorizon_utils.sph2cart)
   * [cart2sph](#lhorizon_utils.cart2sph)
   * [hats](#lhorizon_utils.hats)
   * [make\_raveled\_meshgrid](#lhorizon_utils.make_raveled_meshgrid)
   * [default\_lhorizon\_session](#lhorizon_utils.default_lhorizon_session)
+  * [perform\_telnet\_exchange](#lhorizon_utils.perform_telnet_exchange)
+  * [have\_telnet\_conversation](#lhorizon_utils.have_telnet_conversation)
 * [kernels](#kernels)
 * [kernels.load](#kernels.load)
   * [load\_metakernel](#kernels.load.load_metakernel)
 
 <a name="_response_parsers"></a>
+
 # Module \_response\_parsers
 
 helper functions for parsing response text from the JPL Horizons CGI.
@@ -70,6 +77,7 @@ these functions are intended to be called by LHorizon methods and should
 generally not be called directly.
 
 <a name="_response_parsers.make_lhorizon_dataframe"></a>
+
 #### make\_lhorizon\_dataframe
 
 ```python
@@ -79,6 +87,7 @@ def make_lhorizon_dataframe(jpl_response: str, topocentric_target: bool = False)
 make a DataFrame from Horizons CGI response text.
 
 <a name="_response_parsers.clean_up_vectors_series"></a>
+
 #### clean\_up\_vectors\_series
 
 ```python
@@ -88,6 +97,7 @@ def clean_up_vectors_series(pattern: str, series: Array) -> pd.Series
 regularize units, format text, and parse dates in a VECTORS table column
 
 <a name="_response_parsers.clean_up_observer_series"></a>
+
 #### clean\_up\_observer\_series
 
 ```python
@@ -97,6 +107,7 @@ def clean_up_observer_series(pattern: str, series: Array) -> Optional[pd.Series]
 regularize units, format text, and parse dates in an OBSERVER table column
 
 <a name="_response_parsers.clean_up_series"></a>
+
 #### clean\_up\_series
 
 ```python
@@ -106,6 +117,7 @@ def clean_up_series(query_type: str, pattern: str, series: Array) -> pd.Series
 dispatch function for Horizons column cleanup functions
 
 <a name="_response_parsers.polish_lhorizon_dataframe"></a>
+
 #### polish\_lhorizon\_dataframe
 
 ```python
@@ -117,6 +129,7 @@ make_lhorizon_dataframe. make tractable column names. also convert
 distance units from AU or km to m and arcseconds to degrees.
 
 <a name="solutions"></a>
+
 # Module solutions
 
 functionality for solving body-intersection problems. used by
@@ -124,6 +137,7 @@ functionality for solving body-intersection problems. used by
 but could also sensibly contain expressions for bodies of different shapes.
 
 <a name="solutions.ray_sphere_equations"></a>
+
 #### ray\_sphere\_equations
 
 ```python
@@ -135,6 +149,7 @@ a ray with origin at (0, 0, 0) and direction vector [x, y, z]
 and a sphere with radius == 'radius' and center (mx, my, mz).
 
 <a name="solutions.get_ray_sphere_solution"></a>
+
 #### get\_ray\_sphere\_solution
 
 ```python
@@ -148,6 +163,7 @@ unless you are planning to further manipulate them, you would probably
 rather call make_ray_sphere_lambdas().
 
 <a name="solutions.lambdify_system"></a>
+
 #### lambdify\_system
 
 ```python
@@ -159,6 +175,7 @@ into the expressions in 'expressions'. 'expression_names' serve as the
 keys of the dict.
 
 <a name="solutions.make_ray_sphere_lambdas"></a>
+
 #### make\_ray\_sphere\_lambdas
 
 ```python
@@ -169,6 +186,7 @@ produce a dict of functions that return solutions for the ray-sphere
 equation for a sphere of radius `radius`.
 
 <a name="config"></a>
+
 # Module config
 
 configuration options for `lhorizon`. Modifying members of this module will
@@ -184,7 +202,12 @@ change the default behavior of `LHorizon` objects.
 * TABLE_PATTERNS: tables of regexes used to match Horizons fields and the
     arguably more-readable column names we assign them to
 
+<a name="dscratch"></a>
+
+# Module dscratch
+
 <a name="_request_formatters"></a>
+
 # Module \_request\_formatters
 
 formatters to translate various parameters and options into URL parameters
@@ -192,6 +215,7 @@ that can be parsed by JPL Horizons' CGI. These are mostly intended to be used
 by LHorizon methods and should probably not be called directly.
 
 <a name="_request_formatters.format_geodetic_origin"></a>
+
 #### format\_geodetic\_origin
 
 ```python
@@ -201,6 +225,7 @@ def format_geodetic_origin(location: Mapping) -> dict
 creates dict of URL parameters for a geodetic coordinate origin
 
 <a name="_request_formatters.format_geodetic_target"></a>
+
 #### format\_geodetic\_target
 
 ```python
@@ -210,6 +235,7 @@ def format_geodetic_target(location: Mapping) -> str
 creates command string for a geodetic target
 
 <a name="_request_formatters.format_epoch_params"></a>
+
 #### format\_epoch\_params
 
 ```python
@@ -219,6 +245,7 @@ def format_epoch_params(epochs: Union[Sequence, Mapping]) -> dict
 creates dict of URL parameters from epochs
 
 <a name="_request_formatters.make_commandline"></a>
+
 #### make\_commandline
 
 ```python
@@ -228,15 +255,17 @@ def make_commandline(target: Union[str, int, Mapping], closest_apparition: Union
 makes 'primary' command string for Horizons CGI request'
 
 <a name="_request_formatters.assemble_request_params"></a>
+
 #### assemble\_request\_params
 
 ```python
-def assemble_request_params(commandline: str, query_type: str, extra_precision: bool, max_hour_angle: float, quantities: str, refraction: bool, refsystem: str, solar_elongation: Sequence[int]) -> dict[str]
+def assemble_request_params(commandline: str, query_type: str, extra_precision: bool, max_hour_angle: float, quantities: str, refraction: bool, refsystem: str, solar_elongation: Sequence[float]) -> dict[str]
 ```
 
 final-stage assembler for Horizons CGI URL parameters
 
 <a name="base"></a>
+
 # Module base
 
 This is the base module for `lhorizon`. It implements a class, `LHorizon`,
@@ -244,6 +273,7 @@ used to query the `JPL Horizons <https://ssd.jpl.nasa.gov/horizons.cgi>`
 solar system ephemerides service.
 
 <a name="base.LHorizon"></a>
+
 ## LHorizon Objects
 
 ```python
@@ -357,6 +387,7 @@ to these attributes to affect subsequent queries to JPL Horizons.
 ### methods
 
 <a name="base.LHorizon.dataframe"></a>
+
 #### LHorizon.dataframe
 
 ```python
@@ -371,6 +402,7 @@ this function triggers a query to JPL Horizons if a query has not yet
 been sent. Otherwise, it uses the cached response.
 
 <a name="base.LHorizon.table"></a>
+
 #### LHorizon.table
 
 ```python
@@ -388,6 +420,7 @@ this function triggers a query to JPL Horizons if a query has not yet
 been sent. Otherwise, it uses the cached response.
 
 <a name="base.LHorizon.check_queried"></a>
+
 #### LHorizon.check\_queried
 
 ```python
@@ -401,6 +434,7 @@ LHorizon.prepare_request(), LHorizon.check_queried() will
 'incorrectly' return True.
 
 <a name="base.LHorizon.query"></a>
+
 #### LHorizon.query
 
 ```python
@@ -412,6 +446,7 @@ update this LHorizon's response attribute. if we have already fetched
 with identical parameters, don't fetch again unless explicitly told to.
 
 <a name="base.LHorizon.prepare_request"></a>
+
 #### LHorizon.prepare\_request
 
 ```python
@@ -423,6 +458,7 @@ automatically by LHorizon.__init__(), but can also be called after
 query parameters or request have been manually altered.
 
 <a name="base.LHorizon.__str__"></a>
+
 #### LHorizon.\_\_str\_\_
 
 ```python
@@ -432,6 +468,7 @@ query parameters or request have been manually altered.
 String representation of LHorizon object instance
 
 <a name="base.LHorizon.__repr__"></a>
+
 #### LHorizon.\_\_repr\_\_
 
 ```python
@@ -441,19 +478,11 @@ String representation of LHorizon object instance
 String representation of LHorizon object instance
 
 <a name="targeter_utils"></a>
+
 # Module targeter\_utils
 
-<a name="targeter_utils.find_intersections"></a>
-#### find\_intersections
-
-```python
-def find_intersections(solutions: Mapping[Any, Callable], ray_direction: Array, target_center: Array) -> dict
-```
-
-find intersections between ray_direction and target_center given a mapping
-of functions (like output of `solutions.make_ray_sphere_lambdas`)
-
 <a name="targeter_utils.array_reference_shift"></a>
+
 #### array\_reference\_shift
 
 ```python
@@ -469,9 +498,11 @@ even higher-level interface to `FURNSH` like
 `lhorizon.kernels.load_metakernel()`
 
 <a name="target"></a>
+
 # Module target
 
 <a name="target.Targeter"></a>
+
 ## Targeter Objects
 
 ```python
@@ -479,10 +510,11 @@ class Targeter()
 ```
 
 <a name="target.Targeter.__init__"></a>
+
 #### Targeter.\_\_init\_\_
 
 ```python
- | def __init__(target: Ephemeris, solutions: Mapping[Callable] = None, target_radius: Optional[float] = None)
+ | def __init__(target: Ephemeris, solutions: Mapping[str, Callable] = None, target_radius: Optional[float] = None)
 ```
 
 target: LHorizon instance or dataframe; if a dataframe, must
@@ -502,6 +534,7 @@ target_radius: used only if no intersection solutions are
     a target body of this radius.
 
 <a name="target.Targeter.find_targets"></a>
+
 #### Targeter.find\_targets
 
 ```python
@@ -527,6 +560,7 @@ body surface and target body center -- but considerably less error than
 if you don't have a corrected vector from origin to target body center.
 
 <a name="target.Targeter.find_target_grid"></a>
+
 #### Targeter.find\_target\_grid
 
 ```python
@@ -541,6 +575,7 @@ in self.ephemerides["pointing"].
 all non-time-releated caveats from Targeter.find_targets() apply.
 
 <a name="target.Targeter.transform_targets_to_body_frame"></a>
+
 #### Targeter.transform\_targets\_to\_body\_frame
 
 ```python
@@ -552,12 +587,14 @@ self.ephemerides["topocentric"] using find_targets() or
 find_target_grid() before calling this function.
 
 <a name="handlers"></a>
+
 # Module handlers
 
 This module contains a number of specialized query constructors and related
 helper functions for lhorizon.
 
 <a name="handlers.estimate_line_count"></a>
+
 #### estimate\_line\_count
 
 ```python
@@ -570,6 +607,7 @@ angle, or other restrictive options are set. Used by bulk query
 constructors to help split large queries across multiple `LHorizon`s.
 
 <a name="handlers.chunk_time"></a>
+
 #### chunk\_time
 
 ```python
@@ -580,6 +618,7 @@ chunk time into a series of intervals that will return at most `chunksize`
 lines from _Horizons_.
 
 <a name="handlers.datetime_from_horizon_epochs"></a>
+
 #### datetime\_from\_horizon\_epochs
 
 ```python
@@ -589,6 +628,7 @@ def datetime_from_horizon_epochs(start: str, stop: str, step: Union[int, str])
 convert epoch dict to datetime in order to estimate response length.
 
 <a name="handlers.construct_lhorizon_list"></a>
+
 #### construct\_lhorizon\_list
 
 ```python
@@ -606,10 +646,11 @@ inefficient for _Horizons_ and delivering many of them in quick succession
 typically causes it to tightly throttle the requester.
 
 <a name="handlers.query_all_lhorizons"></a>
+
 #### query\_all\_lhorizons
 
 ```python
-def query_all_lhorizons(lhorizons: Sequence[LHorizon], delay_between=2, delay_retry=8)
+def query_all_lhorizons(lhorizons: Sequence[LHorizon], delay_between=2, delay_retry=8, max_retries=5)
 ```
 
 queries a sequence of `LHorizon`s using a shared
@@ -617,6 +658,7 @@ session, carefully closing sockets and pausing between them, regenerating
 session and pausing for a longer interval if _Horizons_ rejects a query
 
 <a name="handlers.list_sites"></a>
+
 #### list\_sites
 
 ```python
@@ -628,6 +670,7 @@ format this response as a DataFrame. if no body is specified, uses Earth
 (399).
 
 <a name="handlers.list_majorbodies"></a>
+
 #### list\_majorbodies
 
 ```python
@@ -637,10 +680,22 @@ def list_majorbodies() -> pd.DataFrame
 query Horizons for all currently-recognized major bodies and format the
 response into a DataFrame.
 
+<a name="handlers.get_observer_quantity_codes"></a>
+
+#### get\_observer\_quantity\_codes
+
+```python
+def get_observer_quantity_codes() -> str
+```
+
+retrieve observer quantity code table from HORIZONS telnet interface
+
 <a name="lhorizon_utils"></a>
+
 # Module lhorizon\_utils
 
 <a name="lhorizon_utils.listify"></a>
+
 #### listify
 
 ```python
@@ -650,6 +705,7 @@ def listify(thing: Any) -> list
 Always a list, for things that want lists. use with care.
 
 <a name="lhorizon_utils.snorm"></a>
+
 #### snorm
 
 ```python
@@ -663,6 +719,7 @@ maximum. If a single value is passed for thing, returns a float;
 otherwise, returns a sequence of floats.
 
 <a name="lhorizon_utils.hunt_csv"></a>
+
 #### hunt\_csv
 
 ```python
@@ -673,7 +730,56 @@ finds chunk of csv in a larger string defined as regex, splits it,
 and returns as list. really useful only for single lines.
 worse than StringIO -> numpy or pandas csv reader in other cases.
 
+<a name="lhorizon_utils.are_in"></a>
+
+#### are\_in
+
+```python
+def are_in(items: Iterable, oper: Callable = and_) -> Callable
+```
+
+iterable -> function
+returns function that checks if its single argument contains all
+(or by changing oper, perhaps any) items
+
+<a name="lhorizon_utils.is_it"></a>
+
+#### is\_it
+
+```python
+def is_it(*types: type) -> Callable[Any, bool]
+```
+
+partially-evaluated predicate form of `isinstance`
+
+<a name="lhorizon_utils.utc_to_tt_offset"></a>
+
+#### utc\_to\_tt\_offset
+
+```python
+def utc_to_tt_offset(time: dt.datetime) -> float
+```
+
+return number of seconds necessary to advance UTC
+to TT. we aren't presently supporting dates prior to 1972
+because fractional leap second handling is another thing.
+
+<a name="lhorizon_utils.utc_to_tdb"></a>
+
+#### utc\_to\_tdb
+
+```python
+def utc_to_tdb(time: Union[dt.datetime, str]) -> dt.datetime
+```
+
+return time in tdb / jpl horizons coordinate time from passed time in utc.
+may in some cases be closer to tt, but offset should be no more than 2 ms
+in the worst case. only works for times after 1972 because of fractional
+leap second handling. strings are assumed to be in UTC+0. passed datetimes
+must be timezone-aware.
+
 <a name="lhorizon_utils.dt_to_jd"></a>
+
 #### dt\_to\_jd
 
 ```python
@@ -685,6 +791,7 @@ algorithm derived from Julian Date article on scienceworld.wolfram.com,
 itself based on Danby, J. M., _Fundamentals of Celestial Mechanics_
 
 <a name="lhorizon_utils.numeric_columns"></a>
+
 #### numeric\_columns
 
 ```python
@@ -694,6 +801,7 @@ def numeric_columns(data: pd.DataFrame) -> list[str]
 return a list of all numeric columns of a DataFrame
 
 <a name="lhorizon_utils.produce_jd_series"></a>
+
 #### produce\_jd\_series
 
 ```python
@@ -707,6 +815,7 @@ floatlike strings will be interpreted as jd and not modified. inputs of
 mixed time formats or scales will likely produce undesired behavior.
 
 <a name="lhorizon_utils.time_series_to_et"></a>
+
 #### time\_series\_to\_et
 
 ```python
@@ -717,18 +826,10 @@ def time_series_to_et(time_series: Union[
 
 convert time -> 'seconds since J2000' epoch scale preferred by SPICE.
 accepts anything `pandas` can cast to Series and interpret as datetime.
-Assumes input is in UTC time scale.
-
-<a name="lhorizon_utils.is_it"></a>
-#### is\_it
-
-```python
-def is_it(*types: type) -> Callable[Any, bool]
-```
-
-partially-evaluated predicate form of `isinstance`
+if not timezone-aware, assumes input is in UTC.
 
 <a name="lhorizon_utils.sph2cart"></a>
+
 #### sph2cart
 
 ```python
@@ -740,7 +841,12 @@ by default; pass unit="radians" to specify input in radians. if passed any
 arraylike objects, returns a DataFrame, otherwise, returns a tuple of
 values.
 
+caveats:
+1. this assumes a coordinate convention in which latitude runs from -90
+    to 90 degrees.
+
 <a name="lhorizon_utils.cart2sph"></a>
+
 #### cart2sph
 
 ```python
@@ -751,7 +857,13 @@ convert cartesian to spherical coordinates. returns degrees by default;
 pass unit="radians" to return radians. if passed any arraylike objects,
 returns a DataFrame, otherwise, returns a tuple of values.
 
+caveats:
+1. this assumes a coordinate convention in which latitude runs from -90
+    to 90 degrees.
+2. returns longitude in strictly positive coordinates.
+
 <a name="lhorizon_utils.hats"></a>
+
 #### hats
 
 ```python
@@ -762,6 +874,7 @@ convert an array of passed "vectors" (row-wise-stacked sequences of
 floats) to unit vectors
 
 <a name="lhorizon_utils.make_raveled_meshgrid"></a>
+
 #### make\_raveled\_meshgrid
 
 ```python
@@ -773,6 +886,7 @@ product of axes standing in for a vector space, conventionally produced
 by numpy.meshgrid)
 
 <a name="lhorizon_utils.default_lhorizon_session"></a>
+
 #### default\_lhorizon\_session
 
 ```python
@@ -781,13 +895,42 @@ def default_lhorizon_session() -> requests.Session
 
 returns a requests.Session object with default `lhorizon` options
 
+<a name="lhorizon_utils.perform_telnet_exchange"></a>
+
+#### perform\_telnet\_exchange
+
+```python
+def perform_telnet_exchange(message: bytes, read_until_this: bytes, connection: Telnet) -> bytes
+```
+
+send message via connection, block until read_until_this is received
+or connection's timeout is met, and return all input up to encounter
+with read_until_this.
+
+<a name="lhorizon_utils.have_telnet_conversation"></a>
+
+#### have\_telnet\_conversation
+
+```python
+def have_telnet_conversation(conversation_structure: Sequence[tuple[bytes, bytes]], connection: Telnet, lazy: bool = False) -> Union[Iterator, tuple[bytes]]
+```
+
+perform a series of noninteractive telnet exchanges via connection
+and return the output of those exchanges.
+
+if lazy is True, return the conversation as an iterator that
+performs and yields the output of each exchange when incremented.
+
 <a name="kernels"></a>
+
 # Module kernels
 
 <a name="kernels.load"></a>
+
 # Module kernels.load
 
 <a name="kernels.load.load_metakernel"></a>
+
 #### load\_metakernel
 
 ```python
@@ -797,3 +940,4 @@ def load_metakernel()
 convenience wrapper for `spiceypy.furnsh()` and thus SPICE `FURNSH`.
 it's impossible to accurately 'target' paths in a flexible way inside a
 SPICE metakernel; this sweeps directory structure messiness under the rug.
+

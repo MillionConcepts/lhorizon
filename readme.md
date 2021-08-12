@@ -76,6 +76,11 @@ The Jupyter Notebooks provided in the [examples](https://nbviewer.jupyter.org/gi
 directory are the best quick-start guides to usage. See the [API reference](docs/api.md) for more details on the 
 package's behavior.
 
+## tests
+
+tests can be found in the [lhorizon/tests](lhorizon/tests) module. You can run them simply by executing `pytest` 
+at the command line from the repository root directory.
+
 ## changelog
 
 * 2021-06-21: Full 1.0 release. Extensive changes from older versions:

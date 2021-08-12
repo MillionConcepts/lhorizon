@@ -17,7 +17,7 @@ setup(
     extras_require={
         "tests": ["pytest", "pytest-mock", "pytest-cov"],
         "target": ["spiceypy", "sympy"],
-        "examples": ["jupyter"]
+        "examples": ["jupyter"],
     },
     package_data={
         "": ["kernels/*.*", "tests/data/*.*"],
