@@ -940,4 +940,3 @@ def load_metakernel()
 convenience wrapper for `spiceypy.furnsh()` and thus SPICE `FURNSH`.
 it's impossible to accurately 'target' paths in a flexible way inside a
 SPICE metakernel; this sweeps directory structure messiness under the rug.
-
