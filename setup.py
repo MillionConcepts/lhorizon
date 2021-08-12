@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="lhorizon",
-    version="1.0.0",
+    version="1.0.1a.1",
     url="https://github.com/millionconcepts/lhorizon.git",
     author="Million Concepts",
     author_email="mstclair@millionconcepts.com",
