@@ -18,7 +18,11 @@ from more_itertools import chunked
 
 from lhorizon import LHorizon
 from lhorizon.constants import HORIZON_TIME_ABBREVIATIONS
-from lhorizon.lhorizon_utils import default_lhorizon_session
+from lhorizon.lhorizon_utils import (
+    default_lhorizon_session,
+    have_telnet_conversation,
+    open_noninteractive_jpl_telnet_connection,
+)
 
 
 def estimate_line_count(
@@ -218,8 +222,28 @@ def list_majorbodies() -> pd.DataFrame:
     return pd.DataFrame(data_values, columns=["id", "name"]).dropna(axis=0)
 
 
-# TODO: de-deprecate this
+def get_observer_quantity_codes() -> str:
+    """
+    retrieve observer quantity code table from HORIZONS telnet interface"""
+    jpl = open_noninteractive_jpl_telnet_connection()
+    conversation_structure = (
+        (b"499\n", b" <cr>:"),
+        (b"E\n", b" : "),
+        (b"o\n", b" : "),
+        (b"301\n", b"--> "),
+        (b"\n", b" : "),
+        (b"\n", b" : "),
+        (b"\n", b" : "),
+        (b"\n", b" : "),
+        (b"n\n", b" : "),
+        (b"?\n", b"Spacecraft \r\n"),
+    )
+    conversation = have_telnet_conversation(conversation_structure, jpl)
+    quantity_response = conversation[-1].decode("ascii")
+    return re.search(r"1\..*Spacecraft", quantity_response, re.DOTALL).group()
 
+
+# TODO: de-deprecate this
 # def moon_phase(moontime):
 #     """
 #     Time (in any astropy.time-parseable format) -> float giving moon phase in

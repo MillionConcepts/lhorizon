@@ -75,3 +75,9 @@ def test_list_majorbodies():
             )
         ]
     )
+
+
+def test_get_observer_quantity_codes():
+    codes = get_observer_quantity_codes()
+    assert 'Astrometric' in codes
+    assert '10. ' in codes

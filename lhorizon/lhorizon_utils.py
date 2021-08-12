@@ -1,11 +1,14 @@
 import datetime as dt
+from itertools import starmap
+from telnetlib import Telnet
+
 import pytz
 import re
 from collections.abc import Callable, Iterable, Sequence
 from functools import reduce, partial
 from math import floor
 from operator import or_, and_, contains
-from typing import Any, Optional, Pattern, Union
+from typing import Any, Optional, Pattern, Union, Iterator
 
 import dateutil.parser as dtp
 import numpy as np
@@ -305,3 +308,43 @@ def default_lhorizon_session() -> requests.Session:
     session.headers = config.DEFAULT_HEADERS
     session.stream = False
     return session
+
+
+def open_noninteractive_jpl_telnet_connection() -> Telnet:
+    jpl = Telnet()
+    jpl.open("ssd.jpl.nasa.gov", 6775)
+    jpl.read_until(b"|_____|/  |_|/       |_____|/ ")
+    return jpl
+
+
+def perform_telnet_exchange(
+    message: bytes, read_until_this: bytes, connection: Telnet
+) -> bytes:
+    """
+    send message via connection, block until read_until_this is received
+    or connection's timeout is met, and return all input up to encounter
+    with read_until_this.
+    """
+    connection.write(message)
+    return connection.read_until(read_until_this)
+
+
+def have_telnet_conversation(
+    conversation_structure: Sequence[tuple[bytes, bytes]],
+    connection: Telnet,
+    lazy: bool = False,
+) -> Union[Iterator, tuple[bytes]]:
+    """
+    perform a series of noninteractive telnet exchanges via connection
+    and return the output of those exchanges.
+
+    if lazy is True, return the conversation as an iterator that
+    performs and yields the output of each exchange when incremented.
+    """
+    converse = partial(perform_telnet_exchange, connection=connection)
+    conversation = starmap(converse, conversation_structure)
+    if lazy:
+        return conversation
+    lines = tuple(conversation)
+    connection.close()
+    return lines
