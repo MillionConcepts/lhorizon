@@ -8,7 +8,7 @@ from lhorizon.handlers import (
     query_all_lhorizons,
     construct_lhorizon_list,
     list_sites,
-    list_majorbodies,
+    list_majorbodies, get_observer_quantity_codes,
 )
 from lhorizon.tests.data.test_cases import TEST_CASES
 from lhorizon.tests.utilz import numeric_closeness, make_mock_failing_query
