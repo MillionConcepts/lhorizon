@@ -15,6 +15,9 @@ geometry data for almost every known body in the solar system. `lhorizon` offers
 parse its responses into useful Python objects, and smoothly incorporate them into bulk calculation and transformation 
 workflows.
 
+If you would a quick overview of major package functionality, 
+[you can try these example Notebooks on Binder.](https://mybinder.org/v2/gh/MillionConcepts/lhorizon/main?filepath=examples)
+
 ### origin
 
 `lhorizon` began as a fork of [astroquery.jplhorizons](https://github.com/astropy/astroquery/tree/master/astroquery/jplhorizons) 
@@ -33,27 +36,36 @@ Modern hotel (an easy drive from Pasadena).
 
 ## installation
 
-We recommend that you use the `conda` package manager to control your Python environment for this library. (If you 
-really don't want to use `conda`, the `setup.py` script in the root directory will _probably_ fetch the dependencies
-you need from PyPi, but we do not test or officially support use of non-`conda` environments for `lhorizon`.)
+### automated
 
-If you're already equipped with `conda`, you can create an environment (named "lhorizon") for this package by running: 
-`conda env create -f environment.yml`. (You could instead add its dependencies to an existing environment by running 
-`conda env update -n existing_env -f environment.yml`). Then, if you'd like`lhorizon` installed as a site package in 
-this environment, activate the environment and run `python setup.py install`. 
+`lhorizon` is available on `conda-forge`, and we recommend installing it using the `conda` package manager: 
+`conda install -c conda-forge lhorizon`.
 
-If you're new to `conda` or Python environment management in general, please take a look at the 
+We do not test or officially support the use of non-`conda` environments for `lhorizon`, but it can also be installed from PyPi: 
+`pip install lhorizon`, or, if you'd like all the bells and whistles, `pip install lhorizon[target, examples, tests]`.
+
+### manual
+
+If you'd like to install `lhorizon` by hand, we again recommend that you use `conda` to assemble a Python environment.
+
+If you're already equipped with `conda`, you can create an environment (named "lhorizon") for this package by cloning this repository
+and running: `conda env create -f environment.yml` from the repository root directory. 
+(You could instead add its dependencies to an existing environment by running `conda env update -n existing_env -f environment.yml`). 
+Then, if you'd like`lhorizon` installed as a site package in this environment, activate the environment and run `pip install -e .`. 
+
+If you're new to `conda` or Python environment management in general, please take a look at our easy 
 [conda installation guide](docs/conda_installation_guide.md). 
  
 ### dependencies and requirements
 
 `lhorizon` requires Python >= 3.9 (there are no plans to implement support for older Python versions).
 
-the following packages are required for usage:
+the following packages are required for usage / installation:
 * `more-itertools`
 * `numpy`
 * `pandas`
 * `requests`
+* `pip`
 
 the following dependencies are optional and could potentially be omitted in restrictive install environments: 
 * `jupyter` is only required to run examples
@@ -84,11 +96,18 @@ at the command line from the repository root directory.
 
 ## changelog
 
-* 2021-06-21: Full 1.0 release. Extensive changes from older versions:
+* 2021-06-21: Full 1.0.0 release. Extensive changes from older versions:
     * completes and rationalizes interface 
     * concatenates and standardizes target submodule
     * reasonably complete test coverage and documentation
     * somewhat more extensive example Notebooks
+* 2021-08-13: 1.1.0 release. 
+    * adds additional convenience functions
+    * substantially broadens test coverage
+    * improves installation scripts
+    * examples are now available via Binder
+    * package is now available on `conda-forge` and `pip`
+    * special thanks to [malmans2](https://github.com/malmans2) for his help with this release in review for [JOSS](https://joss.theoj.org/)!
 
 ## cautions / known issues
 
