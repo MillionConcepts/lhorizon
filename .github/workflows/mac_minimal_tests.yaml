@@ -1,4 +1,4 @@
-name: CI
+name: mac minimal env tests
 
 on:
   push:
@@ -15,9 +15,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        os: ["macos-latest"]
         python-version: ["3.9"]
-        environment-file: ["environment.yml", ".minimal-environment.yml"]
+        environment-file: [".minimal-environment.yml"]
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
