@@ -8,6 +8,7 @@ dependencies:
   - numpy
   - python=3.9
   - pandas
+  - pip
   - pytest
   - pytest-cov
   - pytest-mock
