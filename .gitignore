@@ -135,3 +135,6 @@ dmypy.json
 # development junk
 **ipynb_checkpoints
 **scratch**
+
+# too much data
+benchmark/sample**

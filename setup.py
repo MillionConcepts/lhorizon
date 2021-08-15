@@ -19,6 +19,7 @@ setup(
         "tests": ["pytest", "pytest-mock", "pytest-cov"],
         "target": ["spiceypy", "sympy"],
         "examples": ["jupyter"],
+        "benchmarks": ["memory-profiler", "pympler", "astroquery"]
     },
     package_data={
         "": ["kernels/*.*", "tests/data/*.*"],

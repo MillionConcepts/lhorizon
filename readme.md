@@ -25,9 +25,9 @@ If you would a quick overview of major package functionality,
 serverside changes at JPL that prevented it from correctly parsing queries involving target or observer locations given 
 in planetodetic coordinates, and more specifically to provide suppport for queries related to arbitrary locations on 
 the lunar surface. In the process, we extended it to implement a more efficient parser, add support for fast queries in 
-bulk, and remove the use of `astroquery` and `astropy` features (in particular, `astropy` tables are very powerful, but 
-too slow for the applications we wrote this for). At some point, we realized that a fast, standalone interface to 
-Horizons might be useful to the community at large and decided to polish it into a general-use package.
+bulk, and remove the use of `astroquery` and `astropy` features (for both performance and API compatibility reasons). 
+At some point, we realized that a fast, standalone interface to Horizons might be useful to the community at large and 
+decided to polish it into a general-use package.
 
 ### pronunciation
 
