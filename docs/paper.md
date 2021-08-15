@@ -22,16 +22,17 @@ bibliography: paper.bib
 # Summary
 
 `lhorizon` helps you find where things are in the solar system. It is built around a thick Python wrapper for the Jet 
-Propulsion Laboratory (JPL) Solar System Dynamics Group  _Horizons_ service 
-[@Giorgini_2015].  _Horizons_ is the only system in the world that provides 
-ready-to-go, no-assembly-required access to geometry data for almost every object in the solar system.  Other 
-interfaces to _Horizons_ exist, but `lhorizon` is particularly optimized for stability and time-to-value for large 
-queries and for processing results with reference to arbitrary topocentric coordinate systems.
+Propulsion Laboratory (JPL) Solar System Dynamics Group  _Horizons_ service [@Giorgini_2015]. _Horizons_ is the only 
+system in the world that provides ready-to-go, no-assembly-required access to geometry data for almost every object in 
+the solar system.  Other interfaces to _Horizons_ exist (see 'Other Related Work' below for several examples), but 
+`lhorizon` is particularly optimized for stability and time-to-value for large queries and for processing results with 
+reference to arbitrary topocentric coordinate systems.
 
 `lhorizon` offers a flexible, idiomatic, highly performant pseudo-API to _Horizons_ that returns data as standard 
-scientific Python objects (_NumPy_ `ndarrays` and _pandas_ DataFrames). It provides special handling functions for bulk, 
-chunked, and body-listing queries; it also includes an ancillary module, `lhorizon.targeter`, for finding the footprint 
-of an observer’s boresight or field of view in topocentric coordinates on target bodies.  
+scientific Python objects (_NumPy_ [@harris2020array] `ndarrays` and _pandas_ [@reback2020pandas] DataFrames). 
+It provides special handling functions for bulk, chunked, and body-listing queries; it also includes an ancillary 
+module, `lhorizon.targeter`, for finding the footprint of an observer’s boresight or field of view in topocentric 
+coordinates on target bodies.  
 
 We wrote `lhorizon` in support of a research effort to use Earth-based radio telescopes, including Arecibo and the Very 
 Large Array (VLA), to perform heat flow mapping of the Moon. We needed to coregister these data with existing models, 
@@ -51,14 +52,17 @@ changes in _Horizons_ that broke functionality we specifically needed. We implem
 the performance of `jplhorizons` was inadequate for our use case. _astroquery_’s parsers and _astropy_ tables are powerful,
 but this power comes at a performance cost. The cost is irrelevant for many applications, but quite relevant for use 
 cases with tens to hundreds of thousands of data points per analysis. We wrote an entirely new response parser using only builtins, 
-_NumPy_, and _pandas_, resulting in performance improvements of 10-100x. We submitted minimal workarounds for 
-the API issues to _astroquery_, but the changes we made in our fork were too extensive to be folded into 
+_NumPy_, and _pandas_, resulting in performance improvements of 10-100x. (Since then, there have been significant
+backend improvements in _astropy_ tables, and `lhorizon` typically offers only about 10x speed and 50% memory reduction
+over `jplhorizons`. Benchmark notebooks are available in our GitHub repository.)
+
+We submitted minimal workarounds for the API issues to _astroquery_, but the changes we made in our fork were too extensive to be folded into 
 _astroquery_ via a PR -- especially because removing _astropy_ objects and idioms was one of our major design goals.
-We named this fork `lhorizon` and have continued developing it as a distinct project.
+We named this fork `lhorizon` and have continued developing it as a distinct project. 
 
 # Statement of Need
 
-JPL is the most authoritative producer of solar system ep`hemerides. Its geometry products are essential elements of 
+JPL is the most authoritative producer of solar system ephemerides. Its geometry products are essential elements of 
 academic and industrial work in planetary science, astronomy, geosciences, and many other fields. They are useful for 
 any application that makes use of artificial satellites or needs to know about the position of solar system bodies 
 (even “simple” quantities like the solar angle at an arbitrary Earth location). Their value as public resources is 
@@ -97,6 +101,7 @@ encapsulated in other applications. They include:
 
 More broadly, libraries like `astropy.coordinates` [@astropy_2018] and _Skyfield_ [@skyfield_2019] that perform 
 calculations on JPL ephemerides are similar in application to `lhorizon` and should be considered by potential users.
+
 
 # Acknowledgements
 
