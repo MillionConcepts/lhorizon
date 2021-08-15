@@ -12,10 +12,16 @@ import numpy as np
 import pandas as pd
 from dateutil import parser as dtp
 
-from lhorizon.config import TABLE_PATTERNS
+from lhorizon.config import TABLE_PATTERNS, VISIBILITY_FLAG_NAMES
 from lhorizon.constants import AU_TO_M
-from lhorizon.lhorizon_utils import hunt_csv
+from lhorizon.lhorizon_utils import hunt_csv, \
+    convert_horizons_date_spec_to_strftime
 from lhorizon._type_aliases import Array
+
+
+HORIZON_COLUMN_SEARCH = re.compile(r"(Date|JDTDB).*(?=\n\*+)")
+HORIZON_DATA_SEARCH = re.compile(r"\$\$SOE\n(.*)\$\$EOE", re.DOTALL)
+GEODETIC_SEARCH = re.compile(r"(?<=Target geodetic : )\d.*(?= {)")
 
 
 def make_lhorizon_dataframe(
@@ -26,14 +32,14 @@ def make_lhorizon_dataframe(
     """
     # delimiters for column and data sections
     # 'JDTDB' begins the vectors columns; 'Date' begins the observer columns
-    horizon_column_search = re.compile(r"(Date|JDTDB).*(?=\n\*+)")
-    horizon_data_search = re.compile(
-        r"(?<=\$\$SOE\n)(.|\n)*?(\d\d\d\d(.|\n)*)(?=\$\$EOE)"
-    )
+
     # grab these sections and write them into a string buffer
     try:
-        columns = re.search(horizon_column_search, jpl_response)[0]
-        data = re.search(horizon_data_search, jpl_response).group(2)
+        # find bounds of column / data in response & strip spaces from columns
+        columns = re.search(
+            HORIZON_COLUMN_SEARCH, jpl_response
+        )[0].replace(" ", "")
+        data = re.search(HORIZON_DATA_SEARCH, jpl_response).group(1)
     except TypeError:
         raise ValueError(
             "Horizons didn't return a table of data or it couldn't be parsed "
@@ -43,29 +49,41 @@ def make_lhorizon_dataframe(
     data_buffer.write(columns + "\n" + data)
     data_buffer.seek(0)
     # read this buffer as csv
-    horizon_dataframe = pd.read_csv(data_buffer, sep=" *, *", engine="python")
-    # name the unlabeled flag columns
-    horizon_dataframe.rename(
-        mapper={
-            "Unnamed: 2": "solar_presence",
-            "Unnamed: 3": "lunar_presence",
-            "Unnamed: 4": "nearside_flag",
-            "Unnamed: 5": "illumination_flag",
-        },
-        axis=1,
-        inplace=True,
-    )
-    # add the target's geodetic coordinates if desired
+    horizon_dataframe = pd.read_csv(data_buffer, sep=",", engine="c", low_memory=False)
+    # horizons ends lines w/commas, so pandas creates an empty trailing column
+    horizon_dataframe = horizon_dataframe.iloc[:, :-1]
+    horizon_dataframe = clean_visibility_flags(horizon_dataframe)
+    # if appropriate, add target's geodetic coordinates
     if topocentric_target:
-        horizon_target_search = re.compile(
-            r"(?<=Target geodetic : )\d.*(?= {)"
-        )
-        target_geodetic_coords = hunt_csv(horizon_target_search, jpl_response)
+        target_geodetic_coords = hunt_csv(GEODETIC_SEARCH, jpl_response)
         horizon_dataframe["geo_lon"] = target_geodetic_coords[0]
         horizon_dataframe["geo_lat"] = target_geodetic_coords[1]
         horizon_dataframe["geo_el"] = target_geodetic_coords[2]
-    # drop empty columns and return
-    return horizon_dataframe.dropna(axis=1)
+    for c in horizon_dataframe.columns:
+        if ('(ut)' in c.lower()) or ('(tdb)' in c.lower()):
+            horizon_dataframe[c] = horizon_dataframe[c].str.strip()
+    return horizon_dataframe
+
+
+def clean_visibility_flags(horizon_dataframe: pd.DataFrame) -> pd.DataFrame:
+    """
+    assign names to unlabeled 'visibility flag' columns -- solar presence,
+    lunar/interfering body presence, is-target-on-near-side-of-parent-body,
+    is-target-illuminated; drop then if empty
+    """
+    flag_mapping = {
+        unlabeled_flag: flag_name
+        for unlabeled_flag, flag_name in zip(
+            [c for c in horizon_dataframe.columns if 'Unnamed' in c],
+            VISIBILITY_FLAG_NAMES
+        )
+    }
+    horizon_dataframe = horizon_dataframe.rename(mapper=flag_mapping, axis=1)
+    empty_flags = []
+    for flag_column in flag_mapping.values():
+        if horizon_dataframe[flag_column].isin([' ', '']).all():
+            empty_flags.append(flag_column)
+    return horizon_dataframe.drop(empty_flags, axis=1)
 
 
 def clean_up_vectors_series(pattern: str, series: Array) -> pd.Series:
@@ -76,9 +94,9 @@ def clean_up_vectors_series(pattern: str, series: Array) -> pd.Series:
     if pattern in (r"X", r"Y", r"Z", r"VX", r"VY", r"VZ", r"RG", r"RR"):
         return pd.Series(series.astype(np.float64) * 1000)
     # parse ISO dates
-    if pattern == r"Calendar Date":
+    if pattern == r"Calendar":
         # they put AD/BC on these
-        return pd.Series([dtp.parse(instant[3:]) for instant in series])
+        return pd.Series([dtp.parse(instant[5:]) for instant in series])
 
 
 def clean_up_observer_series(
@@ -88,9 +106,12 @@ def clean_up_observer_series(
     regularize units, format text, and parse dates in an OBSERVER table column
     """
     if pattern == r"Date_+\(UT\)":
-        return pd.Series([dtp.parse(instant) for instant in series])
+        return pd.to_datetime(
+            series,
+            format=convert_horizons_date_spec_to_strftime(series.name)
+        )
     if pattern.startswith(
-            ("R.A.", "DEC", "Azi", "Elev", "RA", "NP", "Obs", "T-O-M")
+        ("R.A.", "DEC", "Azi", "Elev", "RA", "NP", "Obs", "T-O-M")
     ):
         if isinstance(series.iloc[0], str):
             # "n. a." values for locations that this quantity is not
@@ -114,9 +135,7 @@ def clean_up_observer_series(
         return series.astype(np.float64)
 
 
-def clean_up_series(
-    query_type: str, pattern: str, series: Array
-) -> pd.Series:
+def clean_up_series(query_type: str, pattern: str, series: Array) -> pd.Series:
     """
     dispatch function for Horizons column cleanup functions
     """

@@ -26,7 +26,7 @@ DEFAULT_HEADERS = {
 
 TABLE_PATTERNS = {
     "VECTORS": {
-        r"Calendar Date": "time_tdb",
+        r"Calendar": "time_tdb",
         r"X": "x",
         r"Y": "y",
         r"Z": "z",
@@ -71,3 +71,10 @@ TABLE_PATTERNS = {
         "geo_el": "geo_el",
     },
 }
+
+VISIBILITY_FLAG_NAMES = (
+    'solar_presence',
+    'interference_flag',
+    'nearside_flag',
+    'illumination_flag'
+)

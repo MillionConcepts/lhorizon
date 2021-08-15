@@ -97,6 +97,7 @@ def check_against_reference(case, query_type, test_df, test_table):
         ref_df = ref_df.drop(
             columns=["geo_lon", "geo_lat", "geo_el"], errors="ignore"
         )
+    assert set(ref_df.columns.values) == set(test_df.columns.values)
     assert numeric_closeness(ref_df, test_df)
     assert numeric_closeness(ref_table, test_table)
 

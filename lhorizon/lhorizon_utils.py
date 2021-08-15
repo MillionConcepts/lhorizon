@@ -183,6 +183,21 @@ def produce_jd_series(
         return dt_to_jd(epochs.astype("datetime64"))
 
 
+LHORIZON_STRFTIME_MAPPING = {
+    r'.*Date.*(?=HR)': '%Y-%b-%d ',
+    r'HR': '%H',
+    r'MN': '%M',
+    r'SC': '%S',
+    r'fff': '%f'
+}
+
+
+def convert_horizons_date_spec_to_strftime(date_spec):
+    for k, v in LHORIZON_STRFTIME_MAPPING.items():
+        date_spec = re.sub(k, v, date_spec)
+    return date_spec
+
+
 def time_series_to_et(
     time_series: Union[
         str, Sequence[str], dt.datetime, Sequence[dt.datetime], pd.Series
