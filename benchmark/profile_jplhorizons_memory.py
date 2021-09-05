@@ -37,6 +37,7 @@ for response_ix in sorted(cached_responses.keys()):
     lhorizon.response = mock_response()
     mocked_lhorizons.append(lhorizon)
 
+    
 @profile
 def assemble_mocked_horizons(mocked_horizons_list):
     horizons_tables = [
@@ -44,13 +45,5 @@ def assemble_mocked_horizons(mocked_horizons_list):
     ]
     return table.vstack(horizons_tables)
 
-@profile
-def assemble_mocked_lhorizons(mocked_lhorizons_list):
-    lhorizon_dataframes = [
-        l.dataframe() for l in mocked_lhorizons
-    ]
-    return pd.concat(lhorizon_dataframes)
-
-# assemble_mocked_lhorizons(mocked_lhorizons)
 
 assemble_mocked_horizons(mocked_horizons)
