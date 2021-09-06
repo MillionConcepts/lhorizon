@@ -107,7 +107,7 @@ def test_random_reflexive_pointing():
         },
         epochs=intercept_time.isoformat(),
     ).table()
-    # check that the declinations of these two angles are additively inverse,
+    # check that the declinations of these two rays are additively inverse,
     # or nearly so, as one would hope they would be
     lunar_dec = moon_from_cydonia["dec_app_icrf"].iloc[0]
     cydonia_dec = cydonia_from_subcydonian_point["dec_app_icrf"].iloc[0]
