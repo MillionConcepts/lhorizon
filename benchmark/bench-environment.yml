@@ -3,15 +3,16 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - astroquery
+  - jupyter
   - more-itertools
+  - memory_profiler
   - numpy
   - python=3.9
   - pandas
+  - pip
+  - pympler
   - pytest
   - pytest-mock
   - pytest-cov
   - requests
-  - astroquery
-  - pympler
-  - memory-profiler
-
