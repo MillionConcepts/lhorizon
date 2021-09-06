@@ -52,7 +52,8 @@ wanted to minimize.  _Horizons_ was an appealing data source due to its high
 precision (up to microarcseconds for Moon positions relative to Earth positions 
 in this time frame, well above the limits of precision introduced by our 
 other constraints) and its ability to deliver tables of positions relative to 
-arbitrary topocentric points with robust corrections for light-time, 
+arbitrary topocentric points, automatically referenced to the geodetic datums of
+their host bodies (_e.g._ WGS84 for Earth), with robust corrections for light-time, 
 gravitational deflection, and aberration.
 
 However, with millions of data points widely dispersed across times and
