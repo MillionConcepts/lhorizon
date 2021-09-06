@@ -1,3 +1,8 @@
+"""
+tests of `LHorizon` functionality using locally-cached HTTP responses from
+_Horizons_
+"""
+
 import datetime as dt
 import re
 import warnings
@@ -14,6 +19,11 @@ from lhorizon.tests.utilz import (
 
 
 def test_prepare_request_1():
+    """
+    test for consistency of URL-formatting behavior: is the LHorizon
+    instance producing the URL we think it should? this case has topocentric
+    coordinates.
+    """
     case = TEST_CASES["CYDONIA_PALM_SPRINGS_1959_TOPO"]
     test_lhorizon = LHorizon(**case["init_kwargs"])
     test_lhorizon.prepare_request()
@@ -21,6 +31,13 @@ def test_prepare_request_1():
 
 
 def test_prepare_request_2():
+    """
+    test for consistency of URL-formatting behavior: is the LHorizon
+    instance producing the URL we think it should? this is an "instantaneous"
+    request that has no defined time field, so also check that the
+    timestamp in this URL corresponds to the time of the system clock
+    (converted to jd).
+    """
     case = TEST_CASES["MEUDON_MOON_NOW"]
     test_lhorizon = LHorizon(**case["init_kwargs"])
     test_lhorizon.prepare_request()
@@ -34,6 +51,10 @@ def test_prepare_request_2():
 
 
 def test_prepare_request_3():
+    """
+    test for consistency of URL-formatting behavior: is the LHorizon
+    instance producing the URL we think it should?
+    """
     case = TEST_CASES["SUN_PHOBOS_1999"]
     test_lhorizon = LHorizon(**case["init_kwargs"])
     test_lhorizon.prepare_request()
@@ -41,12 +62,21 @@ def test_prepare_request_3():
 
 
 def test_prepare_request_4():
+    """
+    test for consistency of URL-formatting behavior: is the LHorizon
+    instance producing the URL we think it should? includes correct output
+    from a lot of 'unusual' options.
+    """
     case = TEST_CASES["WEIRD_OPTIONS"]
     test_lhorizon = LHorizon(**case["init_kwargs"])
     assert test_lhorizon.request.url == case["request_url"]
 
 
 def test_reject_long_query():
+    """
+    LHorizon should fail if we naively attempt to initialize it with an
+    extremely long query. This test attempts to make it fail in that way.
+    """
     with pytest.raises(ValueError):
         LHorizon(epochs=[2459371 + i / 100 for i in range(10000)])
     with warnings.catch_warnings():
@@ -60,6 +90,10 @@ def test_reject_long_query():
 # note that pd.read_csv behaves differently under test in PyCharm, for reasons
 # that must be horrible
 def test_make_table_1(mocker):
+    """
+    e2e test comparing attributes of LHorizon created by parsing
+    cached HTTP response to values in saved CSV table
+    """
     case = TEST_CASES["CYDONIA_PALM_SPRINGS_1959_TOPO"]
     mock_query = make_mock_query_from_test_case(case)
     mocker.patch.object(LHorizon, "query", mock_query)

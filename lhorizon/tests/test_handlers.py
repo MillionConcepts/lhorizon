@@ -1,3 +1,8 @@
+"""
+tests for lhorizon.handlers, using both mocked responses and data retrieved
+live from the JPL Horizons CGI and telnet endpoints
+"""
+
 import time
 
 import pandas as pd
@@ -23,6 +28,11 @@ test_parameters = cases.keys()
 
 @pytest.mark.parametrize("case_name", test_parameters)
 def test_bulk_retrieval(case_name):
+    """
+    construct a "bulk" query from a defined set of parameters, and verify that
+    a table produced from the concatenated responses matches a cached CSV file
+    from Horizons.
+    """
     case = cases[case_name]
     lhorizons = construct_lhorizon_list(**case["init_kwargs"])
     assert len(lhorizons) == case["lhorizon_count"]
@@ -35,6 +45,10 @@ def test_bulk_retrieval(case_name):
 
 
 def test_retry_request_behavior(mocker):
+    """
+    networking behavior unit test. make sure query_all_lhorizons responds in
+    the ways we would like to 503 responses.
+    """
     failed_query = make_mock_failing_query(503)
     mocker.patch.object(LHorizon, "query", failed_query)
     futile_lhorizon = [LHorizon()]
@@ -49,6 +63,10 @@ def test_retry_request_behavior(mocker):
 
 
 def test_list_sites():
+    """
+    simple test of the list_sites function. make sure the dataframe it
+    produces from JPL's telnet response has some expected features.
+    """
     sites = list_sites()
     assert (
         sites.loc[sites["id"] == "-1"]["Observatory Name"].iloc[0] == "Arecibo"
@@ -57,6 +75,10 @@ def test_list_sites():
 
 
 def test_list_majorbodies():
+    """
+    simple test of the list_majorbodies function. make sure the dataframe it
+    produces from JPL's telnet response has some expected features.
+    """
     bodies = list_majorbodies()
     assert (
         bodies.loc[bodies["id"] == "1"]["name"].iloc[0] == "Mercury Barycenter"
@@ -78,6 +100,10 @@ def test_list_majorbodies():
 
 
 def test_get_observer_quantity_codes():
+    """
+    simple test of the get_observer_quantity_codes function. make sure the
+    string it produces from JPL's telnet response has some expected features.
+    """
     codes = get_observer_quantity_codes()
     assert 'Astrometric' in codes
     assert '10. ' in codes

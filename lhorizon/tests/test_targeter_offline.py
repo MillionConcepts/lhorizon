@@ -1,3 +1,5 @@
+"""offline tests for lhorizon.target, using cached HTTP responses"""
+
 import warnings
 
 import numpy as np
@@ -6,6 +8,8 @@ import pytest
 
 from lhorizon.tests.utilz import make_sure_this_fails, PointlessTargeter
 
+# skip these tests if running in an install that doesn't include dependencies
+# for lhorizon.target
 pytest.importorskip("sympy")
 
 from lhorizon import LHorizon
@@ -21,6 +25,10 @@ lunar_solutions = make_ray_sphere_lambdas(LUNAR_RADIUS)
 
 
 def test_find_targets_long():
+    """
+    check "long" (single topocentric point across multiple times)
+    target-finding behavior on cached response.
+    """
     path = TEST_CASES["TRANQUILITY_2021"]["data_path"]
     targeter = Targeter(
         pd.read_csv(path + "_CENTER.csv"), solutions=lunar_solutions
@@ -40,6 +48,11 @@ def test_find_targets_long():
 
 
 def test_mismatched_target_rejection():
+    """
+    Targeter should raise an exception if we attempt to find intersections
+    between two arrays with mismatched time dimensions. this test attempts to
+    make it raise that exception
+    """
     path = TEST_CASES["TRANQUILITY_2021"]["data_path"]
     targeter = Targeter(
         pd.read_csv(path + "_CENTER.csv"), solutions=lunar_solutions
@@ -55,6 +68,10 @@ def test_mismatched_target_rejection():
 
 
 def test_find_targets_wide():
+    """
+    check 'wide' (multiple topocentric points at a single time) target-finding
+    behavior on cached response.
+    """
     path = TEST_CASES["TRANQUILITY_2021"]["data_path"]
     targeter = Targeter(
         pd.read_csv(path + "_CENTER.csv").loc[0:0], solutions=lunar_solutions
@@ -97,6 +114,11 @@ def test_find_targets_wide():
 
 
 def test_trivial_casting_cases():
+    """
+    test that Targeter nicely handles passed dataframes in both cartesian and
+    spherical coordinates, as well as passed LHorizons from both OBSERVER and
+    VECTOR responses.
+    """
     cartesian = pd.DataFrame(
         {coord: list(range(10)) for coord in ("x", "y", "z")}
     )
@@ -120,6 +142,10 @@ def test_trivial_casting_cases():
 
 
 def test_things_that_should_not_work():
+    """
+    test that various invalid inputs to methods of Targeter raise the desired
+    exceptions.
+    """
     for args in [
         ["i'm a string!", None, 10],
         [pd.DataFrame([1, 1], [1, 1]), None, None],

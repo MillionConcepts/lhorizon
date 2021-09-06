@@ -1,3 +1,5 @@
+"""unit tests for special response-parsing cases"""
+
 from itertools import product
 
 import pytest
@@ -17,6 +19,11 @@ test_parameters = product(cases.keys(), ("OBSERVER", "VECTORS"))
 
 @pytest.mark.parametrize("case_name,query_type", test_parameters)
 def test_response_parser(case_name: str, query_type: str):
+    """
+    verify consistency of response-parsing behavior against a cached
+    HTTP response from Horizons: does it produce the precise dataframes we
+    think it should?
+    """
     case = cases[case_name]
     path = case["data_path"] + "_" + query_type
     with open(path, "rb") as file:
