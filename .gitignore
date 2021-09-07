@@ -136,6 +136,5 @@ dmypy.json
 **ipynb_checkpoints
 **scratch**
 
-# too much data
-benchmark/samples/
-
+# too much extraneous data
+benchmark/samples*
