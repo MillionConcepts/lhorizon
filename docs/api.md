@@ -13,7 +13,6 @@
   * [lambdify\_system](#solutions.lambdify_system)
   * [make\_ray\_sphere\_lambdas](#solutions.make_ray_sphere_lambdas)
 * [config](#config)
-* [dscratch](#dscratch)
 * [\_request\_formatters](#_request_formatters)
   * [format\_geodetic\_origin](#_request_formatters.format_geodetic_origin)
   * [format\_geodetic\_target](#_request_formatters.format_geodetic_target)
@@ -29,7 +28,6 @@
     * [prepare\_request](#base.LHorizon.prepare_request)
     * [\_\_str\_\_](#base.LHorizon.__str__)
     * [\_\_repr\_\_](#base.LHorizon.__repr__)
-* [benchscratch](#benchscratch)
 * [targeter\_utils](#targeter_utils)
   * [array\_reference\_shift](#targeter_utils.array_reference_shift)
 * [target](#target)
@@ -38,7 +36,6 @@
     * [find\_targets](#target.Targeter.find_targets)
     * [find\_target\_grid](#target.Targeter.find_target_grid)
     * [transform\_targets\_to\_body\_frame](#target.Targeter.transform_targets_to_body_frame)
-* [benchscratch\_2](#benchscratch_2)
 * [handlers](#handlers)
   * [estimate\_line\_count](#handlers.estimate_line_count)
   * [chunk\_time](#handlers.chunk_time)
@@ -216,10 +213,6 @@ change the default behavior of `LHorizon` objects.
 * DEFAULT_HEADERS: default headers for Horizons requests
 * TABLE_PATTERNS: tables of regexes used to match Horizons fields and the
     arguably more-readable column names we assign them to
-
-<a id="dscratch"></a>
-
-# Module dscratch
 
 <a id="_request_formatters"></a>
 
@@ -492,10 +485,6 @@ def __repr__()
 
 String representation of LHorizon object instance
 
-<a id="benchscratch"></a>
-
-# Module benchscratch
-
 <a id="targeter_utils"></a>
 
 # Module targeter\_utils
@@ -604,10 +593,6 @@ def transform_targets_to_body_frame(source_frame="j2000", target_frame="j2000")
 transform targets from source_frame to body_frame. you must initialize
 self.ephemerides["topocentric"] using find_targets() or
 find_target_grid() before calling this function.
-
-<a id="benchscratch_2"></a>
-
-# Module benchscratch\_2
 
 <a id="handlers"></a>
 
