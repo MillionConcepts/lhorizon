@@ -65,7 +65,7 @@ def test_retry_request_behavior(mocker):
 def test_list_sites():
     """
     simple test of the list_sites function. make sure the dataframe it
-    produces from JPL's telnet response has some expected features.
+    produces from JPL's response has some expected features.
     """
     sites = list_sites()
     assert (
@@ -77,7 +77,7 @@ def test_list_sites():
 def test_list_majorbodies():
     """
     simple test of the list_majorbodies function. make sure the dataframe it
-    produces from JPL's telnet response has some expected features.
+    produces from JPL's response has some expected features.
     """
     bodies = list_majorbodies()
     assert (

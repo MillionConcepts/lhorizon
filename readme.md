@@ -8,12 +8,12 @@
 
 ### purpose
 
-`lhorizon` helps you find where things are in the solar system. It is built around a thick Python wrapper for the 
+`lhorizon` helps you find things in the Solar System. It is built around a thick Python wrapper for the 
 Jet Propulsion Laboratory (JPL) [Horizons](https://ssd.jpl.nasa.gov/?horizons) service. _Horizons_, provided by JPL's
-Solar System Dynamics Group (SSD), is the only service in the world that offers no-assembly-required high-precision 
-geometry data for almost every known body in the solar system. `lhorizon` offers tools to query _Horizons_ for data, 
-parse its responses into useful Python objects, and smoothly incorporate them into bulk calculation and transformation 
-workflows.
+Solar System Dynamics Group (SSD), is one of the only sources in the world that offers no-assembly-required 
+high-precision geometry data for almost every known body in the Solar System. `lhorizon` offers tools to query 
+_Horizons_ for data, parse its responses into useful Python objects, and smoothly incorporate them into bulk 
+calculation and transformation workflows.
 
 If you would a quick overview of major package functionality, 
 [you can try these example Notebooks on Binder.](https://mybinder.org/v2/gh/MillionConcepts/lhorizon/main?filepath=examples)
