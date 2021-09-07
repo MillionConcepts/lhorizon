@@ -112,14 +112,17 @@ _Horizons_ is, by comparison, user-friendly. While it does not implement all of
 the utilities of the SPICE toolkit, it offers flexibility SPICE does not and
 contains state information for many sites and bodies for which no SPICE kernels exist.
 _Horizons_ offers several interface methods: interactive web, telnet, email, and
-web CGI. Because bulk
-queries to the CGI endpoint are not easy to compose and parsing the returned 
-text is not straightforward, a wrapper that simply builds URLs for this 
-interface and parses the returned text definitely improves access to 
-Solar System geometry data. An official REST API to _Horizons_ is forthcoming 
-but not yet available, and the details of its capabilities have not been 
-publicly released [@Giorgini_2020]. It is likely that high-level wrappers for 
-this API will be useful, and we plan to update `lhorizon` to fill this role.
+web CGI. Because bulk queries to the CGI endpoint are not easy to compose and parsing its responses
+is not straightforward, simply building URLs for this interface and  
+parsing the returned text significantly improves access to Solar System geometry data --
+and `lhorizon` does more than that. Some likely use cases include calculating solar angles on Mars,
+determining the precise distance from the Solar System barycenter to an artificial satellite, 
+and finding selenodetic coordinates for pixels within the field of view of a terrestrial telescope pointed
+at the Moon. We include Jupyter Notebooks in our repository that illustrate these uses.
+
+An official REST API to _Horizons_ is forthcoming but not yet available, and the details of its capabilities 
+have not been publicly released [@Giorgini_2020]. It is likely that high-level wrappers for this API will be useful, 
+and we plan to update `lhorizon` to fill this role.
 
 # Other Related Work
 
