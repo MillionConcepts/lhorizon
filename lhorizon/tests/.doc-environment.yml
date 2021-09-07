@@ -1,0 +1,10 @@
+name: lh-docs
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pydoc-markdown
+  - pytest
+  - sh
+

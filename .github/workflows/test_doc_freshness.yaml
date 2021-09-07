@@ -1,0 +1,40 @@
+name: doc freshness test
+
+on:
+  push:
+    branches: "main"
+  pull_request:
+    branches: "*"
+  workflow_dispatch:
+
+
+jobs:
+  build:
+    name: ${{ matrix.os }} py${{ matrix.python-version }} ${{ matrix.environment-file }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest"]
+        python-version: ["3.9"]
+        environment-file: ["lhorizon/tests/.doc-environment.yml"]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          environment-file: ${{ matrix.environment-file }}
+          activate-environment: lh-docs
+          auto-update-conda: false
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up conda environment
+        shell: bash -l {0}
+        run: conda list
+
+      - name: Run Tests
+        shell: bash -l {0}
+        run: pytest lhorizon/tests/test_rebuild_docs.py
+#
+#      - name: Setup tmate session
+#        uses: mxschmitt/action-tmate@v3
+#
