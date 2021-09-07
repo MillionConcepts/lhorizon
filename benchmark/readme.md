@@ -15,7 +15,7 @@ Notebooks/scripts in this directory illustrate several performance differences b
 
 ## installation
 
-_all instructions assume that you are in a console in the `benchmarks` directory with a working  installation of 
+_all instructions assume that you are in a console in the `benchmarks` directory with a working installation of 
 `conda`._
 
 1. Extra files not distributed with this repository are necessary to run these benchmarks.

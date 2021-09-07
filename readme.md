@@ -89,10 +89,13 @@ directory are the best quick-start guides to usage. You can also [try these exam
 
 See the [API reference](docs/api.md) for more details on the package's behavior.
 
-## tests
+## tests & benchmarks
 
-tests can be found in the [lhorizon.tests](lhorizon/tests) module. You can run them simply by executing `pytest` 
+Tests can be found in the [lhorizon.tests](lhorizon/tests) module. You can run them simply by executing `pytest` 
 at the command line from the repository root directory.
+
+You can also find some performance benchmarks in the [benchmarks](lhorizon/benchmarks) directory. Instructions for 
+running them can be found in [benchmarks/readme.md](benchmarks/readme.md)
 
 ## changelog
 
