@@ -24,7 +24,7 @@ bibliography: paper.bib
 `lhorizon` helps you locate natural and artificial bodies and features in the
 Solar System. It is built around a thick Python wrapper for the Jet Propulsion
 Laboratory (JPL) Solar System Dynamics Group  _Horizons_ service
-[@Giorgini_2015]. _Horizons_ is the one of the only providers of ready-to-go,
+[@Giorgini_2015]. _Horizons_ is one of the only providers of ready-to-go,
 no-assembly-required geometry data for almost every object in the
 Solar System.  Other interfaces to _Horizons_ exist (see 'Other Related Work'
 below for several examples), but `lhorizon` is particularly optimized for
@@ -36,7 +36,7 @@ to _Horizons_ that returns data as standard scientific Python objects (_NumPy_
 [@harris2020array] `ndarrays` and _pandas_ [@reback2020pandas] DataFrames). It
 provides special handling functions for bulk, chunked, and body-listing
 queries; it also includes an ancillary module, `lhorizon.targeter`, for finding
-the footprint of an observer’s boresight or field of view in topocentric
+the footprint of an observer's boresight or field of view in topocentric
 coordinates on target bodies. 
 
 We wrote `lhorizon` in support of a research effort to use Earth-based radio
@@ -49,32 +49,32 @@ their processing pipelines aren't readily suited for goals like producing
 lunar maps. Using these instruments in unusual ways also resulted in
 additional measurement uncertainties (_e.g._, geometric uncertainty) that we
 wanted to minimize.  _Horizons_ was an appealing data source due to its high 
-precision (up to microarcseconds for Moon positions relative to Earth positions 
-in this time frame, well above the limits of precision introduced by our 
+precision (up to microarcseconds for Moon positions relative to Earth 
+in the relevant time frame, well above the limits of precision introduced by our 
 other constraints) and its ability to deliver tables of positions relative to 
-arbitrary topocentric points, automatically referenced to the geodetic datums of
+arbitrary topocentric points, natively referenced to the geodetic datums of
 their host bodies (_e.g._ WGS84 for Earth), with robust corrections for light-time, 
-gravitational deflection, and aberration.
+gravitational delays, and aberration.
 
 However, with millions of data points widely dispersed across times and
 observing locations, we needed a highly performant programmatic interface to
-perform our task. We were pleased to discover that the _astroquery_
+achieve our task. We were pleased to discover that the _astroquery_
 [@Ginsburg_2019] project included a module for querying _Horizons_ called
 `jplhorizons`. This module, written primarily by Michael Mommert around 2016,
-is tightly integrated with _astroquery_. It uses _astroquery_’s session
+is tightly integrated with _astroquery_. It uses _astroquery_'s session
 handlers and parsing system, and returns results in _astropy_ tables.
-Unfortunately, we discovered that, due to changes in the behavior of the
+Unfortunately, we discovered that due to changes in the behavior of the
 Horizons CGI endpoint, parts of `jplhorizons` that probably worked very well in
 2016 no longer worked in 2019. We implemented workarounds, but discovered that
 the performance of `jplhorizons` was inadequate for our use
-case. _astroquery_’s parsers and _astropy_ tables are powerful, but this power
-comes at a performance cost. The cost is irrelevant for many applications, but
+case. _astroquery_'s parsers and _astropy_ tables are powerful, but this power
+comes at a performance cost. The cost is irrelevant for many applications but
 quite relevant for use cases with tens to hundreds of thousands of data points
 per analysis. We wrote an entirely new response parser using only builtins, 
-_NumPy_, and _pandas_, resulting in performance improvements of 10-100x.
+_NumPy_, and _pandas_, resulting in performance improvements of a factor 10-100x.
 (Since then, there have been significant backend improvements in _astropy_ 
 tables, and `lhorizon` typically offers only about 10x speed and 50% memory 
-reduction over `jplhorizons`. Benchmark notebooks are available in our GitHub 
+reduction over the latest version of `jplhorizons`. Benchmark notebooks are available in our GitHub 
 repository.)
 
 We submitted minimal workarounds for the API issues to _astroquery_, but the
@@ -98,7 +98,7 @@ JPL offers two automated interfaces to its geometry products: the SPICE toolkit
 Information Facility) and _Horizons_. SPICE is very powerful but presents a
 high barrier to entry. Using SPICE requires not only acquiring and configuring
 software, but also collecting the appropriate data files, called “kernels”.
-There is no central repository for kernels -- NAIF’s website comes closest, but
+There is no central repository for kernels -- NAIF's website comes closest, but
 crucial kernels are scattered across hundreds of other Planetary Data System
 (PDS) archives. Loading a consistent kernel pool is challenging and requires
 scripting in a domain-specific markup language. Learning the SPICE toolkit can
@@ -115,7 +115,7 @@ _Horizons_ offers several interface methods: interactive web, telnet, email, and
 web CGI. Because bulk queries to the CGI endpoint are not easy to compose and parsing its responses
 is not straightforward, simply building URLs for this interface and  
 parsing the returned text significantly improves access to Solar System geometry data --
-and `lhorizon` does more than that. Some likely use cases include calculating solar angles on Mars,
+`lhorizon` does that, and more. Some likely use cases include calculating solar angles on Mars,
 determining the precise distance from the Solar System barycenter to an artificial satellite, 
 and finding selenodetic coordinates for pixels within the field of view of a terrestrial telescope pointed
 at the Moon. We include Jupyter Notebooks in our repository that illustrate these uses.
@@ -131,8 +131,8 @@ though most are incomplete, defunct, or encapsulated in other applications.
 They include:
 
 * _py-NASA-horizons_, a vectors query wrapper; abandoned since 2013 and no longer functional [@py_nasa_horizons_repo]
-* Mihok’s _HORIZON-JPL_, a REST API; abandoned since 2014 and no longer functional [@horizon_jpl_repo]
-* Fejes’ _JS-HORIZONS_, a js library focused on physical rather than geometry data [@js_horizons_repo]
+* Mihok's _HORIZON-JPL_, a REST API; abandoned since 2014 and no longer functional [@horizon_jpl_repo]
+* Fejes' _JS-HORIZONS_, a js library focused on physical rather than geometry data [@js_horizons_repo]
 
 More broadly, libraries like `astropy.coordinates` [@astropy_2018] and 
 _Skyfield_ [@skyfield_2019] that perform calculations based on JPL 
