@@ -71,11 +71,11 @@ case. _astroquery_'s parsers and _astropy_ tables are powerful, but this power
 comes at a performance cost. The cost is irrelevant for many applications but
 quite relevant for use cases with tens to hundreds of thousands of data points
 per analysis. We wrote an entirely new response parser using only builtins, 
-_NumPy_, and _pandas_, resulting in performance improvements of a factor 10-100x.
+_NumPy_, and _pandas_, resulting in performance improvements of a factor of 10-100x.
 (Since then, there have been significant backend improvements in _astropy_ 
 tables, and `lhorizon` typically offers only about 10x speed and 50% memory 
-reduction over the latest version of `jplhorizons`. Benchmark notebooks are available in our GitHub 
-repository.)
+reduction over the latest version of `jplhorizons`. Benchmark notebooks are available 
+in our GitHub repository.)
 
 We submitted minimal workarounds for the API issues to _astroquery_, but the
 changes we made in our fork were too extensive to be folded into 
@@ -115,7 +115,7 @@ _Horizons_ offers several interface methods: interactive web, telnet, email, and
 web CGI. Because bulk queries to the CGI endpoint are not easy to compose and parsing its responses
 is not straightforward, simply building URLs for this interface and  
 parsing the returned text significantly improves access to Solar System geometry data --
-`lhorizon` does that, and more. Some likely use cases include calculating solar angles on Mars,
+`lhorizon` does that and more. Some likely use cases include calculating solar angles on Mars,
 determining the precise distance from the Solar System barycenter to an artificial satellite, 
 and finding selenodetic coordinates for pixels within the field of view of a terrestrial telescope pointed
 at the Moon. We include Jupyter Notebooks in our repository that illustrate these uses.
@@ -141,7 +141,7 @@ by potential users.
 
 This application space also includes lower-level ephemeris toolkits other 
 than SPICE that may be preferable for some applications. For instance, the 
-CALCEPH library, developed by the IMCCE of the Observatoire de Paris, offers 
+CALCEPH [@calceph] library, developed by the IMCCE of the Observatoire de Paris, offers 
 interfaces to many programming languages and is compatible with a wider 
 variety of ephemeris formats than SPICE.
 
