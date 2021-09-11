@@ -6,7 +6,7 @@ import pytz
 import re
 from collections.abc import Callable, Iterable, Sequence
 from functools import reduce, partial
-from math import floor
+import math
 from operator import or_, and_, contains
 from typing import Any, Optional, Pattern, Union, Iterator
 
@@ -141,6 +141,9 @@ def dt_to_jd(time: Union[dt.datetime, pd.Series]) -> Union[float, pd.Series]:
     # use accessor on datetime series
     if isinstance(time, pd.Series):
         time = time.dt
+        floor = np.floor
+    else:
+        floor = math.floor
     y, m, d = time.year, time.month, time.day
     h = time.hour + time.minute / 60 + time.second / 3600
     return sum(
