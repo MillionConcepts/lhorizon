@@ -71,6 +71,7 @@ def make_commandline(
     return commandline
 
 
+# TODO: add REF_PLANE parameters
 def assemble_request_params(
     commandline: str,
     query_type: str,
@@ -80,6 +81,9 @@ def assemble_request_params(
     refraction: bool,
     refsystem: str,
     solar_elongation: Sequence[float],
+    vec_corr: str,
+    vec_table: int,
+    ref_plane: str
 ) -> dict[str]:
     """final-stage assembler for Horizons CGI URL parameters"""
     return {
@@ -99,4 +103,7 @@ def assemble_request_params(
         "APPARENT": {False: "AIRLESS", True: "REFRACTED"}[refraction],
         "REF_SYSTEM": refsystem,
         "EXTRA_PREC": {True: "YES", False: "NO"}[extra_precision],
+        # NONE, LT, LT + s
+        "VEC_CORR": "'" + vec_corr + "'",
+        "VEC_TABLE": "'" + str(vec_table) + "'",
     }

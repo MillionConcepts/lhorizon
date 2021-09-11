@@ -267,7 +267,7 @@ makes 'primary' command string for Horizons CGI request'
 #### assemble\_request\_params
 
 ```python
-def assemble_request_params(commandline: str, query_type: str, extra_precision: bool, max_hour_angle: float, quantities: str, refraction: bool, refsystem: str, solar_elongation: Sequence[float]) -> dict[str]
+def assemble_request_params(commandline: str, query_type: str, extra_precision: bool, max_hour_angle: float, quantities: str, refraction: bool, refsystem: str, solar_elongation: Sequence[float], vec_corr: str, vec_table: int, ref_plane: str) -> dict[str]
 ```
 
 final-stage assembler for Horizons CGI URL parameters

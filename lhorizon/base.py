@@ -251,6 +251,9 @@ class LHorizon:
         no_fragments=False,
         quantities=None,
         extra_precision=False,
+        vec_corr: str = "NONE",
+        vec_table: int = 3,
+        ref_plane: str = "ECLIPTIC"
     ):
         """
         sets up url parameters and calls self.session.prepare_request(). this
@@ -275,6 +278,9 @@ class LHorizon:
             refraction,
             refsystem,
             solar_elongation,
+            vec_corr,
+            vec_table,
+            ref_plane
         )
         if isinstance(self.location, Mapping):
             params |= format_geodetic_origin(self.location)
