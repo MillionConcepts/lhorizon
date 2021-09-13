@@ -32,8 +32,7 @@ stability and time-to-value for large queries and for processing results with
 reference to arbitrary topocentric coordinate systems.
 
 `lhorizon` offers a flexible, idiomatic, highly performant pseudo-API
-to _Horizons_ that returns data as standard scientific Python objects (_NumPy_
-[@harris2020array] `ndarrays` and _pandas_ [@reback2020pandas] DataFrames). It
+to _Horizons_ that returns data as standard scientific Python objects (_NumPy_, @harris2020array `ndarrays` and _pandas_ DataFrames, @reback2020pandas). It
 provides special handling functions for bulk, chunked, and body-listing
 queries; it also includes an ancillary module, `lhorizon.targeter`, for finding
 the footprint of an observer's boresight or field of view in topocentric
@@ -53,7 +52,7 @@ precision (up to microarcseconds for Moon positions relative to Earth
 in the relevant time frame, well above the limits of precision introduced by our 
 other constraints) and its ability to deliver tables of positions relative to 
 arbitrary topocentric points, natively referenced to the geodetic datums of
-their host bodies (_e.g._ WGS84 for Earth), with robust corrections for light-time, 
+their host bodies (_e.g._, WGS84 for Earth), with robust corrections for light-time, 
 gravitational delays, and aberration.
 
 However, with millions of data points widely dispersed across times and
@@ -79,9 +78,7 @@ in our GitHub repository.)
 
 We submitted minimal workarounds for the API issues to _astroquery_, but the
 changes we made in our fork were too extensive to be folded into 
-_astroquery_ via a PR -- especially because removing _astropy_ objects and
- idioms was one of our major design goals. We named this fork `lhorizon` and
- have continued developing it as a distinct project. 
+_astroquery_ via a PR -- especially because removing _astropy_ objects and idioms was one of our major design goals. We named this fork `lhorizon` and have continued developing it as a distinct project. 
 
 # Statement of Need
 
@@ -94,8 +91,8 @@ They are thus invaluable public resources. Unfortunately, they are not always
 easy to use.
 
 JPL offers two automated interfaces to its geometry products: the SPICE toolkit
-[@naif_spice_data](developed by NAIF, NASA's Navigation and Ancillary
-Information Facility) and _Horizons_. SPICE is very powerful but presents a
+[@naif_spice_data], developed by NAIF, NASA's Navigation and Ancillary
+Information Facility, and _Horizons_. SPICE is very powerful but presents a
 high barrier to entry. Using SPICE requires not only acquiring and configuring
 software, but also collecting the appropriate data files, called “kernels”.
 There is no central repository for kernels -- NAIF's website comes closest, but
@@ -130,9 +127,9 @@ Many wrappers, helpers, and interfaces for _Horizons_ have been developed,
 though most are incomplete, defunct, or encapsulated in other applications. 
 They include:
 
-* _py-NASA-horizons_, a vectors query wrapper; abandoned since 2013 and no longer functional [@py_nasa_horizons_repo]
-* Mihok's _HORIZON-JPL_, a REST API; abandoned since 2014 and no longer functional [@horizon_jpl_repo]
-* Fejes' _JS-HORIZONS_, a js library focused on physical rather than geometry data [@js_horizons_repo]
+* _py-NASA-horizons_, a vectors query wrapper; abandoned since 2013 and no longer functional [@py_nasa_horizons_repo].
+* Mihok's _HORIZON-JPL_, a REST API; abandoned since 2014 and no longer functional [@horizon_jpl_repo].
+* Fejes' _JS-HORIZONS_, a JavaScript library focused on physical rather than geometry data [@js_horizons_repo].
 
 More broadly, libraries like `astropy.coordinates` [@astropy_2018] and 
 _Skyfield_ [@skyfield_2019] that perform calculations based on JPL 
