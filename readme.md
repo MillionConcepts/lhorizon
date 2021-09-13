@@ -100,17 +100,22 @@ running them can be found in [benchmarks/readme.md](benchmarks/readme.md)
 ## changelog
 
 * 2021-06-21: Full 1.0.0 release. Extensive changes from older versions:
-    * completes and rationalizes interface 
-    * concatenates and standardizes target submodule
-    * reasonably complete test coverage and documentation
-    * somewhat more extensive example Notebooks
+  * completes and rationalizes interface 
+  * concatenates and standardizes target submodule
+  * reasonably complete test coverage and documentation
+  * somewhat more extensive example Notebooks
 * 2021-08-13: 1.1.0 release. 
-    * adds additional convenience functions
-    * substantially broadens test coverage
-    * improves installation scripts
-    * examples are now available via Binder
-    * package is now available on `conda-forge` and `pip`
-    * special thanks to [malmans2](https://github.com/malmans2) for his help with this release in review for [JOSS](https://joss.theoj.org/)!
+  * adds additional convenience functions
+  * substantially broadens test coverage
+  * improves installation scripts
+  * examples are now available via Binder
+  * package is now available on `conda-forge` and `pip`
+  * special thanks to [@malmans2](https://github.com/malmans2) for his help with this release in review for 
+    [JOSS](https://joss.theoj.org/)!
+* 2021-09-13: 1.1.1 release.
+  * various bugfixes and documentation improvements
+  * thanks again to everyone involved with the JOSS review, including [@malmans2](https://github.com/malmans2), 
+    [@steo85it](https://github.com/steo85it), and [@arfon](https://github.com/arfon) 
 
 ## cautions / known issues
 
