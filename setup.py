@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="lhorizon",
     version="1.1.1",
-    description="lhorizon helps you things in the solar system",
+    description="lhorizon helps you find things in the solar system",
     url="https://github.com/millionconcepts/lhorizon.git",
     author="Million Concepts",
     author_email="mstclair@millionconcepts.com",
