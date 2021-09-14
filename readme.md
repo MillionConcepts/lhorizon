@@ -116,6 +116,7 @@ running them can be found in [benchmarks/readme.md](benchmarks/readme.md)
   * various bugfixes and documentation improvements
   * thanks again to everyone involved with the JOSS review, including [@malmans2](https://github.com/malmans2), 
     [@steo85it](https://github.com/steo85it), and [@arfon](https://github.com/arfon) 
+* 2021-09-14: 1.1.2 release. Packaging-only changes.
 
 ## cautions / known issues
 
