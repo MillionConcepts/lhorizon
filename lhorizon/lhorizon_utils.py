@@ -132,6 +132,7 @@ def utc_to_tdb(time: Union[dt.datetime, str]) -> dt.datetime:
     return (offset + time).replace(tzinfo=None)
 
 
+# TODO: add microsecond handling
 def dt_to_jd(time: Union[dt.datetime, pd.Series]) -> Union[float, pd.Series]:
     """
     convert passed datetime or Series of datetime to julian day number (jd).

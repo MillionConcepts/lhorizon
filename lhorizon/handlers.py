@@ -2,6 +2,7 @@
 This module contains a number of specialized query constructors and related
 helper functions for lhorizon.
 """
+import json
 import logging
 from collections.abc import Mapping, MutableMapping, Sequence
 import datetime as dt
@@ -17,6 +18,7 @@ import requests
 from more_itertools import chunked
 
 from lhorizon import LHorizon
+from lhorizon.config import HORIZONS_SERVER
 from lhorizon.constants import HORIZON_TIME_ABBREVIATIONS
 from lhorizon.lhorizon_utils import (
     default_lhorizon_session,
@@ -180,14 +182,15 @@ def list_sites(center_body: int = 399) -> pd.DataFrame:
     # a generalized 'search' command; you must give it some arbitrary table
     # request along with a center string it will interpret as a search
     response = requests.get(
-        "https://ssd.jpl.nasa.gov/horizons_batch.cgi?batch=1&COMMAND=500"
-        "&CENTER=%22*@{}%22&CSV_FORMAT=YES".format(str(center_body))
+        f"{HORIZONS_SERVER}?COMMAND=500"
+        f"&CENTER=%22*@{center_body}%22&CSV_FORMAT=YES"
     )
+    result = json.loads(response.text)['result']
     observatory_header_regex = re.compile(r".*Observatory Name.*\n")
     observatory_data_regex = re.compile(r"(?<=------\n)(.|\n)*?(?=Multiple)")
-    column_text = re.search(observatory_header_regex, response.text).group(0)
+    column_text = re.search(observatory_header_regex, result).group(0)
     columns = re.split("  +", column_text.strip())
-    data_text = re.search(observatory_data_regex, response.text).group(0)
+    data_text = re.search(observatory_data_regex, result).group(0)
     data_values = []
     for line in data_text.splitlines():
         split = re.split(" +", line.strip(), maxsplit=4)
@@ -209,11 +212,12 @@ def list_majorbodies() -> pd.DataFrame:
     response into a DataFrame.
     """
     response = requests.get(
-        "https://ssd.jpl.nasa.gov/horizons_batch.cgi?batch=1&COMMAND=MB"
-        "&CSV_FORMAT=%22YES%22 "
+        f"{HORIZONS_SERVER}?COMMAND=MB"
+        f"&CSV_FORMAT=%22YES%22 "
     )
+    result = json.loads(response.text)['result']
     majorbody_data_regex = re.compile(r"(?<=---- \n) +(.|\n)*?(?=Number)")
-    data_text = re.search(majorbody_data_regex, response.text).group(0)
+    data_text = re.search(majorbody_data_regex, result).group(0)
     data_values = []
     for line in data_text.splitlines():
         strip = re.sub(" +", " ", line.strip())

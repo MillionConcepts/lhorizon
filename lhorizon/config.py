@@ -17,7 +17,7 @@ OBSERVER_QUANTITIES = "1,2,4,13,14,15,17,20,45"
 VECTORS_QUANTITIES = "3"
 TIMEOUT = 30
 
-HORIZONS_SERVER = "https://ssd.jpl.nasa.gov/horizons_batch.cgi"
+HORIZONS_SERVER = "https://ssd.jpl.nasa.gov/api/horizons.api"
 DEFAULT_HEADERS = {
     "Accept": "text/plain,text/html,application/xhtml+xml,"
               "application/xml;q=0.9,,*/*;q=0.8",

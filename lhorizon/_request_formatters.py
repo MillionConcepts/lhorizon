@@ -42,10 +42,10 @@ def format_epoch_params(epochs: Union[Sequence, Mapping]) -> dict:
             or "stop" not in epochs
             or "step" not in epochs
         ):
-            raise ValueError("'epochs' must contain start, " + "stop, step")
-        epoch_payload["START_TIME"] = '"' + str(epochs["start"]) + '"'
-        epoch_payload["STOP_TIME"] = '"' + str(epochs["stop"]) + '"'
-        epoch_payload["STEP_SIZE"] = '"' + str(epochs["step"]) + '"'
+            raise ValueError("'epochs' must contain start, stop, step")
+        epoch_payload["START_TIME"] = f'"{epochs["start"]}"'
+        epoch_payload["STOP_TIME"] = f'"{epochs["stop"]}"'
+        epoch_payload["STEP_SIZE"] = f'"{epochs["step"]}"'
     else:
         # treat epochs as scalar
         epoch_payload["TLIST"] = str(epochs)
@@ -87,15 +87,10 @@ def assemble_request_params(
 ) -> dict[str]:
     """final-stage assembler for Horizons CGI URL parameters"""
     return {
-        "batch": 1,
         "TABLE_TYPE": query_type,
-        "QUANTITIES": "'" + str(quantities) + "'",
-        "COMMAND": '"' + commandline + '"',
-        "SOLAR_ELONG": '"'
-        + str(solar_elongation[0])
-        + ","
-        + str(solar_elongation[1])
-        + '"',
+        "QUANTITIES": f"'{str(quantities)}'",
+        "COMMAND": f'"{commandline}"',
+        "SOLAR_ELONG": f'"{solar_elongation[0]},{solar_elongation[1]}"',
         "LHA_CUTOFF": str(max_hour_angle),
         "CSV_FORMAT": "YES",
         "CAL_FORMAT": "BOTH",
@@ -104,6 +99,7 @@ def assemble_request_params(
         "REF_SYSTEM": refsystem,
         "EXTRA_PREC": {True: "YES", False: "NO"}[extra_precision],
         # NONE, LT, LT + s
-        "VEC_CORR": "'" + vec_corr + "'",
-        "VEC_TABLE": "'" + str(vec_table) + "'",
+        "VEC_CORR": f"'{vec_corr}'",
+        "VEC_TABLE": f"'{vec_table}'",
+        "REF_PLANE": ref_plane
     }

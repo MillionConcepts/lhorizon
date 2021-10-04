@@ -84,7 +84,7 @@ generally not be called directly.
 def make_lhorizon_dataframe(jpl_response: str, topocentric_target: bool = False) -> pd.DataFrame
 ```
 
-make a DataFrame from Horizons CGI response text.
+make a DataFrame from Horizons API response JSON.
 
 <a id="_response_parsers.clean_visibility_flags"></a>
 

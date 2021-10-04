@@ -3,7 +3,7 @@ helper functions for parsing response text from the JPL Horizons CGI.
 these functions are intended to be called by LHorizon methods and should
 generally not be called directly.
 """
-
+import json
 import re
 from io import StringIO
 from typing import Optional
@@ -28,18 +28,21 @@ def make_lhorizon_dataframe(
     jpl_response: str, topocentric_target: bool = False
 ) -> pd.DataFrame:
     """
-    make a DataFrame from Horizons CGI response text.
+    make a DataFrame from Horizons API response JSON.
     """
     # delimiters for column and data sections
     # 'JDTDB' begins the vectors columns; 'Date' begins the observer columns
 
-    # grab these sections and write them into a string buffer
+
     try:
+        # load JSON and extract result section
+        jpl_result = json.loads(jpl_response)['result']
+        # grab these sections and write them into a string buffer:
         # find bounds of column / data in response & strip spaces from columns
         columns = re.search(
-            HORIZON_COLUMN_SEARCH, jpl_response
+            HORIZON_COLUMN_SEARCH, jpl_result
         )[0].replace(" ", "")
-        data = re.search(HORIZON_DATA_SEARCH, jpl_response).group(1)
+        data = re.search(HORIZON_DATA_SEARCH, jpl_result).group(1)
     except TypeError:
         raise ValueError(
             "Horizons didn't return a table of data or it couldn't be parsed "
@@ -49,13 +52,15 @@ def make_lhorizon_dataframe(
     data_buffer.write(columns + "\n" + data)
     data_buffer.seek(0)
     # read this buffer as csv
-    horizon_dataframe = pd.read_csv(data_buffer, sep=",", engine="c", low_memory=False)
+    horizon_dataframe = pd.read_csv(
+        data_buffer, sep=",", engine="c", low_memory=False
+    )
     # horizons ends lines w/commas, so pandas creates an empty trailing column
     horizon_dataframe = horizon_dataframe.iloc[:, :-1]
     horizon_dataframe = clean_visibility_flags(horizon_dataframe)
     # if appropriate, add target's geodetic coordinates
     if topocentric_target:
-        target_geodetic_coords = hunt_csv(GEODETIC_SEARCH, jpl_response)
+        target_geodetic_coords = hunt_csv(GEODETIC_SEARCH, jpl_result)
         horizon_dataframe["geo_lon"] = target_geodetic_coords[0]
         horizon_dataframe["geo_lat"] = target_geodetic_coords[1]
         horizon_dataframe["geo_el"] = target_geodetic_coords[2]

@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from lhorizon.config import HORIZONS_SERVER
+
 TEST_CASES = {
     "CYDONIA_PALM_SPRINGS_1959_TOPO": {
         "init_kwargs": {
@@ -21,13 +23,14 @@ TEST_CASES = {
                 "step": "30m",
             },
         },
-        "request_url": "https://ssd.jpl.nasa.gov/horizons_batch.cgi?batch=1"
-        "&TABLE_TYPE=OBSERVER&QUANTITIES=%271%2C2%2C4%2C13"
+        "request_url": f"{HORIZONS_SERVER}"
+        "?TABLE_TYPE=OBSERVER&QUANTITIES=%271%2C2%2C4%2C13"
         "%2C14%2C15%2C17%2C20%2C45%27&COMMAND=%22g%3A-9.46"
         "%2C40.75%2C0%40499%22&SOLAR_ELONG=%220%2C180%22"
         "&LHA_CUTOFF=0&CSV_FORMAT=YES&CAL_FORMAT=BOTH"
         "&ANG_FORMAT=DEG&APPARENT=AIRLESS&REF_SYSTEM=J2000"
         "&EXTRA_PREC=NO&VEC_CORR=%27NONE%27&VEC_TABLE=%273%27"
+        "&REF_PLANE=ECLIPTIC"
         "&CENTER=coord%40399&COORD_TYPE=GEODETIC&SITE_COORD"
         "=%27-243.460000%2C33.800000%2C0.000000%27&START_TIME"
         "=%221959-01-01T00%3A00%3A00%22&STOP_TIME=%221959-01"
@@ -41,13 +44,13 @@ TEST_CASES = {
             "target": 301,
             "origin": "5@399",
         },
-        "request_url": "https://ssd.jpl.nasa.gov/horizons_batch.cgi?batch=1"
-        "&TABLE_TYPE=OBSERVER&QUANTITIES=%271%2C2%2C4%2C13"
+        "request_url": f"{HORIZONS_SERVER}"
+        "?TABLE_TYPE=OBSERVER&QUANTITIES=%271%2C2%2C4%2C13"
         "%2C14%2C15%2C17%2C20%2C45%27&COMMAND=%22301%22"
         "&SOLAR_ELONG=%220%2C180%22&LHA_CUTOFF=0&CSV_FORMAT"
         "=YES&CAL_FORMAT=BOTH&ANG_FORMAT=DEG&APPARENT=AIRLESS"
         "&REF_SYSTEM=J2000&EXTRA_PREC=NO&VEC_CORR=%27NONE%27"
-        "&VEC_TABLE=%273%27&CENTER=%275%40399%27&TLIST=",
+        "&VEC_TABLE=%273%27&REF_PLANE=ECLIPTIC&CENTER=%275%40399%27&TLIST=",
     },
     "SUN_PHOBOS_1999": {
         "init_kwargs": {
@@ -55,13 +58,13 @@ TEST_CASES = {
             "origin": "@sun",
             "epochs": "1991-01-01",
         },
-        "request_url": "https://ssd.jpl.nasa.gov/horizons_batch.cgi?batch=1"
-        "&TABLE_TYPE=OBSERVER&QUANTITIES=%271%2C2%2C4%2C13"
+        "request_url": f"{HORIZONS_SERVER}"
+        "?TABLE_TYPE=OBSERVER&QUANTITIES=%271%2C2%2C4%2C13"
         "%2C14%2C15%2C17%2C20%2C45%27&COMMAND=%22Phobos%22"
         "&SOLAR_ELONG=%220%2C180%22&LHA_CUTOFF=0&CSV_FORMAT"
         "=YES&CAL_FORMAT=BOTH&ANG_FORMAT=DEG&APPARENT=AIRLESS"
         "&REF_SYSTEM=J2000&EXTRA_PREC=NO&VEC_CORR=%27NONE%27"
-        "&VEC_TABLE=%273%27&CENTER=%27%40sun%27&TLIST=2448257"
+        "&VEC_TABLE=%273%27&REF_PLANE=ECLIPTIC&CENTER=%27%40sun%27&TLIST=2448257"
         ".5&SKIP_DAYLT=NO",
         "data_path": str(Path(Path(__file__).parent, "SUN_PHOBOS_1999")),
     },
@@ -84,27 +87,27 @@ TEST_CASES = {
                 "extra_precision": True,
             },
         },
-        "request_url": "https://ssd.jpl.nasa.gov/horizons_batch.cgi?batch=1"
-        "&TABLE_TYPE=OBSERVER&QUANTITIES=%271%2C2%2C4%2C13"
+        "request_url": f"{HORIZONS_SERVER}"
+        "?TABLE_TYPE=OBSERVER&QUANTITIES=%271%2C2%2C4%2C13"
         "%2C14%2C15%2C17%2C20%2C45%27&COMMAND=%22301+CAP%3B"
         "+NOFRAG%3B%22&SOLAR_ELONG=%221%2C99%22&LHA_CUTOFF=1"
         "&CSV_FORMAT=YES&CAL_FORMAT=BOTH&ANG_FORMAT=DEG"
         "&APPARENT=REFRACTED&REF_SYSTEM=J2000&EXTRA_PREC=YES"
-        "&VEC_CORR=%27NONE%27&VEC_TABLE=%273%27&CENTER=%27500"
-        "%40399%27&ANG_RATE_CUTOFF=5000&START_TIME=%221991-01"
+        "&VEC_CORR=%27NONE%27&VEC_TABLE=%273%27&REF_PLANE=ECLIPTIC"
+        "&CENTER=%27500%40399%27&ANG_RATE_CUTOFF=5000&START_TIME=%221991-01"
         "-01%22&STOP_TIME=%221991-01-10%22&STEP_SIZE=%226h%22"
         "&AIRMASS=80&SKIP_DAYLT=YES",
     },
     # a favorite of Michael Mommert
     "CERES_2000": {
         "init_kwargs": {"target": "Ceres", "epochs": 2451544.5},
-        "request_url": "https://ssd.jpl.nasa.gov/horizons_batch.cgi?batch=1"
-        "&TABLE_TYPE=OBSERVER&QUANTITIES=%271%2C2%2C4%2C13"
+        "request_url": f"{HORIZONS_SERVER}"
+        "?TABLE_TYPE=OBSERVER&QUANTITIES=%271%2C2%2C4%2C13"
         "%2C14%2C15%2C17%2C20%2C45%27&COMMAND=%22Ceres%22"
         "&SOLAR_ELONG=%220%2C180%22&LHA_CUTOFF=0&CSV_FORMAT"
         "=YES&CAL_FORMAT=BOTH&ANG_FORMAT=DEG&APPARENT=AIRLESS"
-        "&REF_SYSTEM=J2000&EXTRA_PREC=NO&CENTER=%27500%40399"
-        "%27&TLIST=2451544.5&SKIP_DAYLT=NO",
+        "&REF_SYSTEM=J2000&EXTRA_PREC=NO&REF_PLANE=ECLIPTIC"
+        "&CENTER=%27500%40399%27&TLIST=2451544.5&SKIP_DAYLT=NO",
         "data_path": str(Path(Path(__file__).parent, "CERES_2000")),
     },
     "TRANQUILITY_2021": {
