@@ -1,11 +1,10 @@
 name: lhorizon
 channels:
   - conda-forge
-  - defaults
 dependencies:
   - jupyter
   - more-itertools
-  - numpy
+  - numpy>=1.2.2
   - python=3.9
   - pandas
   - pip

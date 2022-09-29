@@ -184,7 +184,7 @@ def produce_jd_series(
     try:
         return epochs.astype(float)
     except (ValueError, TypeError):
-        return dt_to_jd(epochs.astype("datetime64"))
+        return dt_to_jd(epochs.astype("datetime64[ms]"))
 
 
 LHORIZON_STRFTIME_MAPPING = {
@@ -214,7 +214,7 @@ def time_series_to_et(
     """
     if not isinstance(time_series, pd.Series):
         time_series = pd.Series(listify(time_series))
-    time_series = time_series.astype("datetime64")
+    time_series = time_series.astype("datetime64[ms]")
     if time_series.iloc[0].tzinfo is None:
         utc = pytz.timezone("UTC")
         time_series = time_series.map(utc.localize)
