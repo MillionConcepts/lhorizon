@@ -91,7 +91,7 @@ def are_in(items: Iterable, oper: Callable = and_) -> Callable:
     return in_it
 
 
-def is_it(*types: type) -> Callable[Any, bool]:
+def is_it(*types: type) -> Callable[[Any], bool]:
     """partially-evaluated predicate form of `isinstance`"""
 
     def it_is(whatever: Any):

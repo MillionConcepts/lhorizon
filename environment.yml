@@ -4,8 +4,8 @@ channels:
 dependencies:
   - jupyter
   - more-itertools
-  - numpy>=1.2.2
-  - python=3.9
+  - numpy
+  - python=3.11
   - pandas
   - pip
   - pytest
