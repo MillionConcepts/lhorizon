@@ -4,8 +4,9 @@ channels:
 dependencies:
   - more-itertools
   - numpy>=1.2.2
-  - python=3.9
+  - python=3.11
   - pandas
+  - pyerfa
   - pytest
   - pytest-mock
   - pytest-cov

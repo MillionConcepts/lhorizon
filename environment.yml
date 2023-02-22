@@ -8,6 +8,7 @@ dependencies:
   - python=3.11
   - pandas
   - pip
+  - pyerfa
   - pytest
   - pytest-cov
   - pytest-mock
