@@ -69,9 +69,9 @@ def test_list_sites():
     """
     sites = list_sites()
     assert (
-        sites.loc[sites["id"] == "-1"]["Observatory Name"].iloc[0] == "Arecibo"
+        sites.loc[sites["code_subc"] == "-1"]["Site name"].iloc[0] == "Arecibo (300-m, 1963 to 2020)"
     )
-    assert ",".join(sites.columns) == "id,E. Lon,DXY,DZ,Observatory Name"
+    assert ",".join(sites.columns) == "code_subc,east long,cyl_rho,z,epoch,Site name"
 
 
 def test_list_majorbodies():

@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 
 from lhorizon import LHorizon
-from lhorizon.lhorizon_utils import dt_to_jd
+from lhorizon.lhorizon_utils import utc_to_jd
 from lhorizon.tests.data.test_cases import TEST_CASES
 from lhorizon.tests.utilz import (
     make_mock_query_from_test_case, numeric_closeness
@@ -39,14 +39,11 @@ def test_prepare_request_2():
     (converted to jd).
     """
     case = TEST_CASES["MEUDON_MOON_NOW"]
-    test_lhorizon = LHorizon(**case["init_kwargs"])
-    test_lhorizon.prepare_request()
-    assert test_lhorizon.request.url.startswith(case["request_url"])
-    assert round(dt_to_jd(dt.datetime.utcnow()), 4) == round(
-        float(
-            re.search(r"TLIST=([\d.]+)", test_lhorizon.request.url).group(1)
-        ),
-        4,
+    test_lh = LHorizon(**case["init_kwargs"])
+    test_lh.prepare_request()
+    assert test_lh.request.url.startswith(case["request_url"])
+    assert round(utc_to_jd(dt.datetime.utcnow()), 4) == round(
+        float(re.search(r"TLIST=([\d.]+)", test_lh.request.url).group(1)), 4
     )
 
 

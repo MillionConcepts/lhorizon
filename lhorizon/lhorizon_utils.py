@@ -1,25 +1,22 @@
 import datetime as dt
-from itertools import starmap
-from telnetlib import Telnet
-
-import pytz
 import re
 from collections.abc import Callable, Iterable, Sequence
-from functools import reduce, partial
-import math
+from functools import reduce, partial, wraps
+from itertools import starmap
 from operator import or_, and_, contains
+from telnetlib import Telnet
 from typing import Any, Optional, Pattern, Union, Iterator
 
-import dateutil.parser as dtp
 import numpy as np
 import pandas as pd
 import pandas.api.types
 import requests
+from erfa import cal2jd, taitt, utctai, dtdb
 from numpy.linalg import norm
 
 from lhorizon import config as config
-from lhorizon._type_aliases import Array, Timelike
-from lhorizon.constants import LEAP_SECOND_THRESHOLDS, DT_J2000_TDB
+from lhorizon._type_aliases import Array
+from lhorizon.constants import J2000_TDB
 
 
 def listify(thing: Any) -> list:
@@ -100,64 +97,6 @@ def is_it(*types: type) -> Callable[[Any], bool]:
     return it_is
 
 
-def utc_to_tt_offset(time: dt.datetime) -> float:
-    """
-    return number of seconds necessary to advance UTC
-    to TT. we aren't presently supporting dates prior to 1972
-    because fractional leap second handling is another thing.
-    """
-    if time.year < 1972:
-        raise ValueError("dates prior to 1972 are not currently supported")
-    # this includes the horrible fractional leap seconds prior to 1972
-    # and the base 32.184s offset between TAI and TT
-    offset = 42.184
-    for threshold in LEAP_SECOND_THRESHOLDS:
-        if time > threshold:
-            offset += 1
-    return offset
-
-
-def utc_to_tdb(time: Union[dt.datetime, str]) -> dt.datetime:
-    """
-    return time in tdb / jpl horizons coordinate time from passed time in utc.
-    may in some cases be closer to tt, but offset should be no more than 2 ms
-    in the worst case. only works for times after 1972 because of fractional
-    leap second handling. strings are assumed to be in UTC+0. passed datetimes
-    must be timezone-aware.
-    """
-    if isinstance(time, str):
-        utc = pytz.timezone("UTC")
-        time = utc.localize(dtp.parse(time))
-    offset = dt.timedelta(seconds=utc_to_tt_offset(time))
-    return (offset + time).replace(tzinfo=None)
-
-
-# TODO: add microsecond handling
-def dt_to_jd(time: Union[dt.datetime, pd.Series]) -> Union[float, pd.Series]:
-    """
-    convert passed datetime or Series of datetime to julian day number (jd).
-    algorithm derived from Julian Date article on scienceworld.wolfram.com,
-    itself based on Danby, J. M., _Fundamentals of Celestial Mechanics_
-    """
-    # use accessor on datetime series
-    if isinstance(time, pd.Series):
-        time = time.dt
-        floor = np.floor
-    else:
-        floor = math.floor
-    y, m, d = time.year, time.month, time.day
-    h = time.hour + time.minute / 60 + time.second / 3600
-    return sum(
-        [
-            367 * y,
-            -1 * floor(7 * (y + floor((m + 9) / 12)) / 4),
-            -1 * floor(3 * (floor((y + (m - 9) / 7) / 100) + 1) / 4),
-            floor(275 * m / 9) + d + 1721028.5,
-            h / 24,
-        ]
-    )
-
-
 def numeric_columns(data: pd.DataFrame) -> list[str]:
     """return a list of all numeric columns of a DataFrame"""
     return [
@@ -165,26 +104,6 @@ def numeric_columns(data: pd.DataFrame) -> list[str]:
         for col in data.columns
         if pandas.api.types.is_numeric_dtype(data[col])
     ]
-
-
-def produce_jd_series(
-    epochs: Union[Timelike, Sequence[Timelike]]
-) -> pd.Series:
-    """
-    convert passed epochs to julian day number (jd). scale is assumed to be
-    utc. this may of course produce very slightly spurious results for dates
-    in the future for which leap seconds have not yet been assigned. floats or
-    floatlike strings will be interpreted as jd and not modified. inputs of
-    mixed time formats or scales will likely produce undesired behavior.
-    """
-
-    if not isinstance(epochs, pd.Series):
-        epochs = listify(epochs)
-        epochs = pd.Series(epochs)
-    try:
-        return epochs.astype(float)
-    except (ValueError, TypeError):
-        return dt_to_jd(epochs.astype("datetime64[ms]"))
 
 
 LHORIZON_STRFTIME_MAPPING = {
@@ -202,24 +121,101 @@ def convert_horizons_date_spec_to_strftime(date_spec):
     return date_spec
 
 
-def time_series_to_et(
-    time_series: Union[
-        str, Sequence[str], dt.datetime, Sequence[dt.datetime], pd.Series
-    ]
-) -> pd.Series:
+def _cast_timeseries(obj: Any):
     """
-    convert time -> 'seconds since J2000' epoch scale preferred by SPICE.
-    accepts anything `pandas` can cast to Series and interpret as datetime.
-    if not timezone-aware, assumes input is in UTC.
+    pass any scalar or iterable interpretable by pandas as timestamp(s),
+    get a datetime64 series back
     """
-    if not isinstance(time_series, pd.Series):
-        time_series = pd.Series(listify(time_series))
-    time_series = time_series.astype("datetime64[ms]")
-    if time_series.iloc[0].tzinfo is None:
-        utc = pytz.timezone("UTC")
-        time_series = time_series.map(utc.localize)
-    tdb_times = time_series.map(utc_to_tdb)
-    return (tdb_times - DT_J2000_TDB).dt.total_seconds()
+    if isinstance(obj, (pd.Series, np.ndarray)):
+        if obj.dtype.kind != 'M':
+            return obj.astype('datetime64')
+        return obj
+    return pd.Series(listify(obj)).astype("datetime64[ns]")
+
+
+def _jd_parts(time_series: pd.Series):
+    """convert pandas time series to julian day number."""
+    # erfa splits julian dates into two parts. first part is always 240000.5
+    djm0, djm = cal2jd(
+        time_series.dt.year, time_series.dt.month, time_series.dt.day
+    )
+    time_of_day = (time_series - time_series.dt.normalize())
+    day_fraction = time_of_day / pd.Timedelta("1 day")
+    return djm0, djm, day_fraction
+    # note that djm0 + djm + day_fraction now gives JD in UT
+
+
+def timecast(func: Callable[[Any], pd.Series], recast=True):
+    @wraps(func)
+    def cast_recast(obj):
+        _intype = type(obj)
+        result = func(_cast_timeseries(obj))
+        if recast is False:
+            return result
+        if isinstance(result, _intype):
+            return result
+        if "__iter__" not in dir(_intype):
+            return result.iloc[0]
+        if _intype is np.ndarray:
+            return result.values
+        if _intype is str:
+            return str(result.iloc[0])
+        if _intype is list:
+            return result.tolist()
+        if _intype is tuple:
+            return tuple(result.tolist())
+        # sorry!
+        return result
+    return cast_recast
+
+
+@timecast
+def utc_to_jd(utc_time: Any):
+    """converts passed utc time or times to julian day number"""
+    time_series = _cast_timeseries(utc_time)
+    return sum(_jd_parts(time_series))
+
+
+def utc_tdb_offset(time_series: pd.Series):
+    """
+    return offset between utc and tdb at each point of passed pandas time
+    series in seconds
+    """
+    djm0, djm, day_fraction = _jd_parts(time_series)
+    _, djm_tt = taitt(djm0, utctai(djm0, djm + day_fraction)[1])
+    # assumes 0 longitude, no offset from earth spin axis, positioned on
+    # equatorial plane. resulting errors from these assumptions should be
+    # very very small.
+    # note that for whatever reason, dtdb wants day fraction in UT.
+    delta0 = dtdb(djm0.values, djm.values, day_fraction.values, 0, 0, 0)
+    # first part is tt day fraction
+    return (djm_tt - djm - day_fraction) * 60 * 60 * 24 + delta0
+
+
+@timecast
+def utc_to_tdb(utc_time: Any):
+    """
+    convert passed utc time or times to tdb (Horizons' preferred timescale
+    for vector queries). does not account for observer position.
+    """
+    return utc_time + pd.to_timedelta(utc_tdb_offset(utc_time), "second")
+
+
+@timecast
+def tdb_to_et(tdb_time: Any):
+    """
+    convert time(s) in TDB to ET, 'ephemeris time' -- absolute seconds since
+    J2000 -- the timescale preferred by SPICE.
+    """
+    return (tdb_time - J2000_TDB) / pd.Timedelta("1s")
+
+
+def utc_to_et(utc_time: Any):
+    """
+    convert times in UTC to ET, 'ephemeris time' -- absolute seconds since
+    J2000 -- the timescale preferred by SPICE.
+    """
+    return (utc_to_tdb(utc_time) - J2000_TDB) / pd.Timedelta("1s")
 
 
 def sph2cart(

@@ -24,7 +24,7 @@ from lhorizon._request_formatters import (
     format_geodetic_origin,
 )
 
-from lhorizon.lhorizon_utils import produce_jd_series, default_lhorizon_session
+from lhorizon.lhorizon_utils import utc_to_jd, default_lhorizon_session
 
 
 class LHorizon:
@@ -336,9 +336,9 @@ class LHorizon:
         convert epochs to a standardized form. should generally only be called
         by __init__
         """
-        import datetime as dt
         if epochs is None:
-            return produce_jd_series(dt.datetime.utcnow())
+            import datetime as dt
+            return utc_to_jd(dt.datetime.utcnow())
         if isinstance(epochs, Mapping):
             if not (
                 "start" in epochs and "stop" in epochs and "step" in epochs
@@ -348,8 +348,12 @@ class LHorizon:
                     "and step".format(str(epochs))
                 )
             return epochs
-        epochs = produce_jd_series(epochs)
-        return epochs
+        if isinstance(epochs, (int, float)):
+            return epochs
+        if "__iter__" in dir(epochs):
+            if isinstance(next(iter(epochs)), (int, float)):
+                return pd.Series(epochs)
+        return utc_to_jd(epochs)
 
     @staticmethod
     def _prep_geodetic_location(location: MutableMapping):

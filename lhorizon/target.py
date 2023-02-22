@@ -7,7 +7,7 @@ import pandas as pd
 
 from lhorizon import LHorizon
 from lhorizon._type_aliases import Ephemeris
-from lhorizon.lhorizon_utils import sph2cart, hats, time_series_to_et
+from lhorizon.lhorizon_utils import sph2cart, hats, utc_to_et
 from lhorizon.solutions import make_ray_sphere_lambdas
 from lhorizon.targeter_utils import array_reference_shift
 
@@ -200,7 +200,7 @@ class Targeter:
                 "Please initialize topocentric targets with find_targets() "
                 "or a similar function before attempting a reference shift."
             )
-        epochs_et = time_series_to_et(self.ephemerides["body"]["time"])
+        epochs_et = utc_to_et(self.ephemerides["body"]["time"])
         # implicitly handling wide/grid case
         if (len(epochs_et) == 1) and (
                 len(self.ephemerides["topocentric"]) != 1

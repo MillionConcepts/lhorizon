@@ -15,6 +15,7 @@ setup(
         "more-itertools",
         "requests",
         "pandas",
+        "pyerfa"
     ],
     extras_require={
         "tests": ["pytest", "pytest-mock", "pytest-cov"],

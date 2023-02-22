@@ -186,24 +186,18 @@ def list_sites(center_body: int = 399) -> pd.DataFrame:
         f"&CENTER=%22*@{center_body}%22&CSV_FORMAT=YES"
     )
     result = json.loads(response.text)['result']
-    observatory_header_regex = re.compile(r".*Observatory Name.*\n")
-    observatory_data_regex = re.compile(r"(?<=------\n)(.|\n)*?(?=Multiple)")
-    column_text = re.search(observatory_header_regex, result).group(0)
+    site_header_regex = re.compile(r".*Site name.*\n")
+    site_data_regex = re.compile(r"(?<=------\n)(.|\n)*?(?=Multiple)")
+    column_text = re.search(site_header_regex, result).group(0)
     columns = re.split("  +", column_text.strip())
-    data_text = re.search(observatory_data_regex, result).group(0)
+    data_text = re.search(site_data_regex, result).group(0)
     data_values = []
     for line in data_text.splitlines():
-        split = re.split(" +", line.strip(), maxsplit=4)
-        # generally, sites on non-Earth bodies do not have id codes, but there
-        # may still be a site or two (even if only the body center) with an id
-        # code, so we cannot simply reduce the number of columns in the df and
-        # expect acceptable parsing
+        split = re.split(" +", line.strip(), maxsplit=5)
         if "." in str(split[0]):
-            split = [np.nan] + re.split(" +", line.strip(), maxsplit=3)
+            split = [np.nan] + re.split(" +", line.strip(), maxsplit=4)
         data_values.append(split)
-    return pd.DataFrame(data_values, columns=columns).rename(
-        columns={"#": "id"}
-    )
+    return pd.DataFrame(data_values, columns=columns)
 
 
 def list_majorbodies() -> pd.DataFrame:
