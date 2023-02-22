@@ -1,6 +1,6 @@
 # lhorizon
 
-[![CI](https://img.shields.io/github/workflow/status/MillionConcepts/lhorizon/CI?logo=github)](https://github.com/MillionConcepts/lhorizon/actions)
+[![CI](https://img.shields.io/github/actions/workflow/status/MillionConcepts/lhorizon/ubuntu_tests.yaml)](https://github.com/MillionConcepts/lhorizon/actions/workflows/ubuntu_tests.yaml)
 [![codecov](https://codecov.io/gh/MillionConcepts/lhorizon/branch/main/graph/badge.svg)](https://codecov.io/gh/MillionConcepts/lhorizon)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/MillionConcepts/lhorizon/main?filepath=examples)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.03495/status.svg)](https://doi.org/10.21105/joss.03495)
