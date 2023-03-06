@@ -5,6 +5,7 @@ import numpy as np
 import spiceypy as spice
 
 from lhorizon._type_aliases import Array
+from lhorizon.lhorizon_utils import cart2sph
 
 
 def array_reference_shift(
@@ -32,7 +33,7 @@ def array_reference_shift(
         )
     else:
         transformation_matrices = [
-            spice.pxform("moon_me", "ECLIPJ2000", time)
+            spice.pxform(origin, destination, time)
             for time in time_series
         ]
     output = []
