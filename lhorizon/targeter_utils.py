@@ -15,40 +15,29 @@ def array_reference_shift(
     wide: bool = False,
 ):
     """
-    using SPICE / SpiceyPy, transform an array of position vectors from origin
-    (frame) to destination (frame) at times in time_series. also computes
-    spherical representation of these coordinates. time_series must be in et
-    (seconds since J2000). Appropriate SPICE kernels must be loaded
-    prior to calling this function using `spiceypy.furnsh()` or an
-    even higher-level interface to `FURNSH` like
-    `lhorizon.kernels.load_metakernel()`
+    transform an array of position vectors from origin (frame) to destination
+    (frame) at times in time_series, using SPICE/SpiceyPy to compute
+    coordinate transformation matrices. also computes spherical representation
+    of these coordinates.
+    time_series must be in et (seconds since J2000).
+    Appropriate SPICE kernels must be loaded prior to calling this function
+    using `spiceypy.furnsh()` or an even higher-level interface to `FURNSH`
+    like `lhorizon.kernels.load_metakernel()`.
+    if wide = True, array_reference_shift will use the first time in the
+    passed time series to transform all vectors in the array.
     """
-    output_positions = []
     if wide is True:
         transformation_matrices = repeat(
-            spice.pxform(origin, destination, time_series[0])
+            spice.pxform(origin, destination, next(iter(time_series)))
         )
     else:
-        transformation_matrices = iter(
-            [spice.pxform(origin, destination, time) for time in time_series]
-        )
-    for coordinate in positions:
-        transformation_matrix = next(transformation_matrices)
-        # some common numpy workflows that might call this array create strided
-        # arrays that the cspice backend chokes on. copying them makes them
-        # contiguous in memory again.
-        if np.isnan(coordinate).any():
-            output_positions.append(np.array(np.repeat(np.nan, 5)))
-            continue
-        output_coord = spice.mxv(transformation_matrix, coordinate.copy())
-        [_, lon, lat] = spice.reclat(output_coord)
-        output_coord = np.append(
-            output_coord, [lon * spice.dpr(), lat * spice.dpr()]
-        )
-        output_positions.append(output_coord)
-    # feeding nan values to spice.reclat results in 0s; we want those values
-    # to be nan as well
-    try:
-        return np.vstack(output_positions)
-    except ValueError:
-        return ValueError
+        transformation_matrices = [
+            spice.pxform("moon_me", "ECLIPJ2000", time)
+            for time in time_series
+        ]
+    output = []
+    for matrix, pos in zip(transformation_matrices, positions):
+        output.append(np.matmul(matrix, pos))
+    output = np.vstack(output)
+    lat, lon, _ = cart2sph(output[:, 0], output[:, 1], output[:, 2])
+    return np.hstack([output, np.vstack([lon, lat]).T])
