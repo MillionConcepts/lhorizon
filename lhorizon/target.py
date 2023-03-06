@@ -69,7 +69,7 @@ class Targeter:
             ):
                 if {lat, lon, radius}.issubset(set(target.columns)):
                     coordinates = sph2cart(
-                        target[lat], target[lon], target[radius]
+                        target[lat], target[lon], target[radius], as_df=True
                     )
                     return pd.concat([coordinates, target], axis=1)
         raise ValueError(
@@ -107,6 +107,7 @@ class Targeter:
                 table["dec_app_icrf"],
                 table["ra_app_icrf"],
                 table["dist"],
+                as_df=True
             )
             return pd.concat([coordinates, table], axis=1)
         raise ValueError(

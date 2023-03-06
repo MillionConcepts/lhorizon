@@ -133,18 +133,6 @@ def _cast_timeseries(obj: Any):
     return pd.Series(listify(obj)).astype("datetime64[ns]")
 
 
-def _jd_parts(time_series: pd.Series):
-    """convert pandas time series to julian day number."""
-    # erfa splits julian dates into two parts. first part is always 240000.5
-    djm0, djm = cal2jd(
-        time_series.dt.year, time_series.dt.month, time_series.dt.day
-    )
-    time_of_day = (time_series - time_series.dt.normalize())
-    day_fraction = time_of_day / pd.Timedelta("1 day")
-    return djm0, djm, day_fraction
-    # note that djm0 + djm + day_fraction now gives JD in UT
-
-
 def timecast(func: Callable[[Any], pd.Series], recast=True):
     @wraps(func)
     def cast_recast(obj):
@@ -167,6 +155,18 @@ def timecast(func: Callable[[Any], pd.Series], recast=True):
         # sorry!
         return result
     return cast_recast
+
+
+def _jd_parts(time_series: pd.Series):
+    """convert pandas time series to julian day number."""
+    # erfa splits julian dates into two parts. first part is always 240000.5
+    djm0, djm = cal2jd(
+        time_series.dt.year, time_series.dt.month, time_series.dt.day
+    )
+    time_of_day = (time_series - time_series.dt.normalize())
+    day_fraction = time_of_day / pd.Timedelta("1 day")
+    return djm0, djm, day_fraction
+    # note that djm0 + djm + day_fraction now gives JD in UT
 
 
 @timecast
@@ -223,7 +223,8 @@ def sph2cart(
     lon: Union[float, Array],
     radius: Union[float, Array] = 1,
     unit: str = "degrees",
-):
+    as_df=False
+) -> Union[pd.DataFrame, tuple]:
     """
     convert spherical to cartesian coordinates. assumes input is in degrees
     by default; pass unit="radians" to specify input in radians. if passed any
@@ -240,11 +241,7 @@ def sph2cart(
     x0 = radius * np.cos(lat) * np.cos(lon)
     y0 = radius * np.cos(lat) * np.sin(lon)
     z0 = radius * np.sin(lat)
-
-    if reduce(
-        or_,
-        map(is_it(pd.DataFrame, np.ndarray, pd.Series), [lat, lon, radius]),
-    ):
+    if as_df is True:
         return pd.DataFrame({"x": x0, "y": y0, "z": z0})
     return x0, y0, z0
 
@@ -254,11 +251,12 @@ def cart2sph(
     y0: Union[float, Array],
     z0: Union[float, Array],
     unit: str = "degrees",
+    as_df=False
 ) -> Union[pd.DataFrame, tuple]:
     """
     convert cartesian to spherical coordinates. returns degrees by default;
     pass unit="radians" to return radians. if passed any arraylike objects,
-    returns a DataFrame, otherwise, returns a tuple of values.
+    returns lat, lon, radius as tuple of ndarrays; otherwise, as tuple of floats.
 
     caveats:
     1. this assumes a coordinate convention in which latitude runs from -90
@@ -266,19 +264,12 @@ def cart2sph(
     2. returns longitude in strictly positive coordinates.
     """
     radius = np.sqrt(x0 ** 2 + y0 ** 2 + z0 ** 2)
-    if x0 != 0:
-        longitude = np.arctan2(y0, x0)
-    else:
-        longitude = np.pi / 2
-    longitude = longitude % (np.pi * 2)
-    latitude = np.arcsin(z0 / np.sqrt(x0 ** 2 + y0 ** 2 + z0 ** 2))
+    longitude = np.arctan2(y0, x0) % (np.pi * 2)
+    latitude = np.arcsin(z0 / radius)
     if unit == "degrees":
-        latitude = np.degrees(latitude)
-        longitude = np.degrees(longitude)
-    if reduce(
-        or_, map(is_it(pd.DataFrame, np.ndarray, pd.Series), [x0, y0, z0])
-    ):
-        return pd.DataFrame({"lat": latitude, "lon": longitude, "r": radius})
+        latitude, longitude = map(np.degrees, (latitude, longitude))
+    if as_df is True:
+        return pd.DataFrame({'lat': latitude, 'lon': longitude, 'r': radius})
     return latitude, longitude, radius
 
 
