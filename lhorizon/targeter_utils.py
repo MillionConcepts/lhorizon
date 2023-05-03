@@ -1,6 +1,7 @@
 from itertools import repeat
-from typing import Sequence
+from typing import Sequence, Optional, Iterable, Union
 
+from more_itertools import divide
 import numpy as np
 import spiceypy as spice
 
@@ -10,7 +11,7 @@ from lhorizon.lhorizon_utils import cart2sph
 
 def array_reference_shift(
     positions: Array,
-    time_series: Sequence,
+    time_series: Sequence[float],
     origin: str,
     destination: str,
     wide: bool = False,
@@ -27,6 +28,15 @@ def array_reference_shift(
     if wide = True, array_reference_shift will use the first time in the
     passed time series to transform all vectors in the array.
     """
+    transformation_matrices = generate_transformation_matrices(
+        origin, destination, time_series, wide
+    )
+    return transform_vectors(positions, transformation_matrices)
+
+
+def generate_transformation_matrices(
+    origin, destination, time_series, wide=False
+):
     if wide is True:
         transformation_matrices = repeat(
             spice.pxform(origin, destination, next(iter(time_series)))
@@ -36,8 +46,14 @@ def array_reference_shift(
             spice.pxform(origin, destination, time)
             for time in time_series
         ]
+    return transformation_matrices
+
+
+def transform_vectors(
+    positions: np.ndarray, matrices: Union[Iterable[np.ndarray], np.ndarray]
+):
     output = []
-    for matrix, pos in zip(transformation_matrices, positions):
+    for matrix, pos in zip(matrices, positions):
         output.append(np.matmul(matrix, pos))
     output = np.vstack(output)
     lat, lon, _ = cart2sph(output[:, 0], output[:, 1], output[:, 2])

@@ -128,7 +128,7 @@ def _cast_timeseries(obj: Any):
     """
     if isinstance(obj, (pd.Series, np.ndarray)):
         if obj.dtype.kind != 'M':
-            return obj.astype('datetime64')
+            return obj.astype('datetime64[ns]')
         return obj
     return pd.Series(listify(obj)).astype("datetime64[ns]")
 

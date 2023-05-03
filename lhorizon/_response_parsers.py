@@ -1,5 +1,5 @@
 """
-helper functions for parsing response text from the JPL Horizons CGI.
+helper functions for parsing response text from the JPL Horizons API.
 these functions are intended to be called by LHorizon methods and should
 generally not be called directly.
 """
@@ -21,7 +21,7 @@ from lhorizon._type_aliases import Array
 
 HORIZON_COLUMN_SEARCH = re.compile(r"(Date|JDTDB).*(?=\n\*+)")
 HORIZON_DATA_SEARCH = re.compile(r"\$\$SOE\n(.*)\$\$EOE", re.DOTALL)
-GEODETIC_SEARCH = re.compile(r"(?<=Target geodetic : )\d.*(?= {)")
+GEODETIC_SEARCH = re.compile(r"(?<=Target geodetic : )\.?\d.*(?= {)")
 
 
 def make_lhorizon_dataframe(
