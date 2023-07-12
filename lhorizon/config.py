@@ -13,7 +13,7 @@ change the default behavior of `LHorizon` objects.
     arguably more-readable column names we assign them to
 """
 
-OBSERVER_QUANTITIES = "1,2,4,13,14,15,17,20,45"
+OBSERVER_QUANTITIES = "1,2,4,10,13,14,15,17,20,45"
 VECTORS_QUANTITIES = "3"
 TIMEOUT = 30
 

@@ -116,6 +116,8 @@ class LHorizon:
     code. "A" will return all available quantities.
     * `extra_precision: bool=False`: return full available precision for
     RA/Dec values in OBSERVER tables
+    * `rise_transit_set: bool = False`: return only times at target rise,
+    transit, and set. Meaningful only for OBSERVER mode
 
     ### attributes
 
@@ -253,7 +255,8 @@ class LHorizon:
         extra_precision=False,
         vec_corr: str = "NONE",
         vec_table: int = 3,
-        ref_plane: str = "ECLIPTIC"
+        ref_plane: str = "ECLIPTIC",
+        rise_transit_set: bool = False
     ):
         """
         sets up url parameters and calls self.session.prepare_request(). this
@@ -295,7 +298,8 @@ class LHorizon:
             params["SKIP_DAYLT"] = "YES"
         else:
             params["SKIP_DAYLT"] = "NO"
-
+        if rise_transit_set:
+            params['R_T_S_ONLY'] = "YES"
         # build, prep, and store request
         request = requests.Request(
             "GET", config.HORIZONS_SERVER, params=params
