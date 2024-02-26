@@ -213,6 +213,7 @@ class LHorizon:
         been sent. Otherwise, it uses the cached response.
         """
         action = "ignore" if self.ignore_oob_time is True else "default"
+        # noinspection PyTypeChecker
         with warnings.catch_warnings(action=action, category=OOBTimeWarning):
             return polish_lhorizon_dataframe(self.dataframe(), self.query_type)
 
@@ -281,8 +282,6 @@ class LHorizon:
         )
         if quantities is None:
             quantities = getattr(config, self.query_type + "_QUANTITIES")
-
-        # TODO: document this
         params = assemble_request_params(
             command,
             self.query_type,

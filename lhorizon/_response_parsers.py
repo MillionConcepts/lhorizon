@@ -20,10 +20,15 @@ from lhorizon.lhorizon_utils import hunt_csv, \
     convert_horizons_date_spec_to_strftime
 from lhorizon._type_aliases import Array
 
-
+# delimiters for column and data sections
+# 'JDTDB' begins the vectors columns; 'Date' begins the observer columns
 HORIZON_COLUMN_SEARCH = re.compile(r"(Date|JDTDB).*(?=\n\*+)")
 HORIZON_DATA_SEARCH = re.compile(r"\$\$SOE\n(.*)\$\$EOE", re.DOTALL)
 GEODETIC_SEARCH = re.compile(r"(?<=Target geodetic : )\.?\d.*(?= {)")
+
+
+class HorizonsReturnedError(ValueError):
+    pass
 
 
 def make_lhorizon_dataframe(
@@ -32,21 +37,22 @@ def make_lhorizon_dataframe(
     """
     make a DataFrame from Horizons API response JSON.
     """
-    # delimiters for column and data sections
-    # 'JDTDB' begins the vectors columns; 'Date' begins the observer columns
+    data = None
     try:
         # load JSON and extract result section
         jpl_result = json.loads(jpl_response)['result']
         # grab these sections and write them into a string buffer:
         # find bounds of column / data in response & strip spaces from columns
+        data = re.search(HORIZON_DATA_SEARCH, jpl_result).group(1)
         columns = re.search(
             HORIZON_COLUMN_SEARCH, jpl_result
         )[0].replace(" ", "")
-        data = re.search(HORIZON_DATA_SEARCH, jpl_result).group(1)
     except TypeError:
+        if data is not None:
+            raise HorizonsReturnedError(data)
         raise ValueError(
-            "Horizons didn't return a table of data or it couldn't be parsed "
-            "as CSV; check the contents of the response to see why."
+            "Couldn't parse either usable data or error an message from "
+            "Horizons response."
         )
     data_buffer = StringIO()
     data_buffer.write(columns + "\n" + data)
