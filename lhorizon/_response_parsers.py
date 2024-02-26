@@ -12,6 +12,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 from dateutil import parser as dtp
+from pandas._libs import OutOfBoundsDatetime
 
 from lhorizon.config import TABLE_PATTERNS, VISIBILITY_FLAG_NAMES
 from lhorizon.constants import AU_TO_M
@@ -104,7 +105,7 @@ def clean_up_vectors_series(pattern: str, series: Array) -> pd.Series:
     warnings.warn(f"unhandled VECTORS column {pattern}")
 
 
-class BCETimeWarning(UserWarning):
+class OOBTimeWarning(UserWarning):
     pass
 
 
@@ -120,16 +121,21 @@ def clean_up_observer_series(
                 series,
                 format=convert_horizons_date_spec_to_strftime(series.name)
             )
-        except ValueError as err:
-            if 'time data "b' in str(err):
-                warnings.warn(
-                    "Python datetime does not support BCE dates; not "
-                    "generating 'time' column. Pass ignore_bce=True to the "
-                    "LHorizon constructor to suppress this warning.",
-                    BCETimeWarning
-                )
-                return
-            raise
+        except (ValueError, OutOfBoundsDatetime) as err:
+            if (
+                not isinstance(err, OutOfBoundsDatetime)
+                and 'time data "b' not in str(err)
+            ):
+                raise
+            warnings.warn(
+                "This result contains dates outside of Pandas's "
+                "supported Timestamp range, so the 'time' column of the "
+                "output of table() will contain strings rather than "
+                "Timestamps. Pass ignore_oob_time=True to the LHorizon "
+                "constructor to suppress this warning.",
+                OOBTimeWarning
+            )
+            return series
     if pattern == "delta":
         return pd.Series(
             [AU_TO_M * delta for delta in series.astype(np.float64)]
