@@ -104,6 +104,10 @@ def clean_up_vectors_series(pattern: str, series: Array) -> pd.Series:
     warnings.warn(f"unhandled VECTORS column {pattern}")
 
 
+class BCETimeWarning(UserWarning):
+    pass
+
+
 def clean_up_observer_series(
     pattern: str, series: Array
 ) -> Optional[pd.Series]:
@@ -111,10 +115,21 @@ def clean_up_observer_series(
     regularize units, format text, and parse dates in an OBSERVER table column
     """
     if pattern == r"Date_+\(UT\)":
-        return pd.to_datetime(
-            series,
-            format=convert_horizons_date_spec_to_strftime(series.name)
-        )
+        try:
+            return pd.to_datetime(
+                series,
+                format=convert_horizons_date_spec_to_strftime(series.name)
+            )
+        except ValueError as err:
+            if 'time data "b' in str(err):
+                warnings.warn(
+                    "Python datetime does not support BCE dates; not "
+                    "generating 'time' column. Pass ignore_bce=True to the "
+                    "LHorizon constructor to suppress this warning.",
+                    BCETimeWarning
+                )
+                return
+            raise
     if pattern == "delta":
         return pd.Series(
             [AU_TO_M * delta for delta in series.astype(np.float64)]

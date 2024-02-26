@@ -117,6 +117,12 @@ running them can be found in [benchmarks/readme.md](benchmarks/readme.md)
   * thanks again to everyone involved with the JOSS review, including [@malmans2](https://github.com/malmans2), 
     [@steo85it](https://github.com/steo85it), and [@arfon](https://github.com/arfon) 
 * 2021-09-14: 1.1.2 release. Packaging-only changes.
+* 2023-12-17: 1.1.3 release. 
+  * handling for Horizons API changes
+  * compatibility fixes for Python 3.12 and other library releases
+  * updated test data for parity with newly-released ephemerides
+
+
 
 ## cautions / known issues
 

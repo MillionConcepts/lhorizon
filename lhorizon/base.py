@@ -14,7 +14,7 @@ import requests
 import lhorizon.config as config
 from lhorizon._response_parsers import (
     make_lhorizon_dataframe,
-    polish_lhorizon_dataframe,
+    polish_lhorizon_dataframe, BCETimeWarning,
 )
 
 from lhorizon._request_formatters import (
@@ -118,6 +118,14 @@ class LHorizon:
     RA/Dec values in OBSERVER tables
     * `rise_transit_set: bool = False`: return only times at target rise,
     transit, and set. Meaningful only for OBSERVER mode
+    #### ignore_bce: bool = False
+    Most Python date/time objects, including pandas Timestamps, cannot
+    handle BCE dates, so if there are any BCE dates in a response, the
+    DataFrame produced by LHorizon.table() will provide time only as Julian
+    Day number ('jd'), and will not include a 'time' column with calendar
+    dates. By default, this will raise a BCETimeWarning. This is annoying if
+    you expect to be dealing with BCE times, so you can pass ignore_bce=True
+    to suppress it.
 
     ### attributes
 
@@ -147,6 +155,7 @@ class LHorizon:
         query_type: str = "OBSERVER",
         allow_long_queries: bool = False,
         query_options: Optional[Mapping] = None,
+        ignore_bce: bool = False
     ):
         if isinstance(target, MutableMapping):
             target = self._prep_geodetic_location(target)
@@ -159,6 +168,7 @@ class LHorizon:
                 "only VECTORS and OBSERVER are supported as query types."
             )
         self.query_type = query_type
+        self.ignore_bce = ignore_bce
         self.epochs = self._prep_epochs(epochs)
         if session is None:
             session = default_lhorizon_session()
@@ -203,7 +213,9 @@ class LHorizon:
         this function triggers a query to JPL Horizons if a query has not yet
         been sent. Otherwise, it uses the cached response.
         """
-        return polish_lhorizon_dataframe(self.dataframe(), self.query_type)
+        action = "ignore" if self.ignore_bce is True else "default"
+        with warnings.catch_warnings(action=action, category=BCETimeWarning):
+            return polish_lhorizon_dataframe(self.dataframe(), self.query_type)
 
     def check_queried(self) -> bool:
         """
