@@ -83,19 +83,11 @@ def check_against_reference(case, query_type, test_df, test_table):
     ref_df = pd.read_csv(path + "_df.csv")
     ref_table = pd.read_csv(path + "_table.csv")
     # chop off columns that are produced after response
-    if "geo_lon" in test_df.columns:
-        test_table = test_table.drop(
-            columns=["geo_lon", "geo_lat", "geo_el"], errors="ignore"
-        )
-        test_df = test_df.drop(
-            columns=["geo_lon", "geo_lat", "geo_el"], errors="ignore"
-        )
-    if "geo_lon" in ref_df.columns:
-        ref_table = ref_table.drop(
-            columns=["geo_lon", "geo_lat", "geo_el"], errors="ignore"
-        )
-        ref_df = ref_df.drop(
-            columns=["geo_lon", "geo_lat", "geo_el"], errors="ignore"
+    for frame in (test_df, ref_df, test_table, ref_table):
+        frame.drop(
+            columns=["geo_lon", "geo_lat", "geo_el"],
+            errors="ignore",
+            inplace=True
         )
     assert set(ref_df.columns.values) == set(test_df.columns.values)
     assert numeric_closeness(ref_df, test_df)

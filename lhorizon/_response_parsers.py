@@ -5,6 +5,7 @@ generally not be called directly.
 """
 import json
 import re
+import warnings
 from io import StringIO
 from typing import Optional
 
@@ -32,8 +33,6 @@ def make_lhorizon_dataframe(
     """
     # delimiters for column and data sections
     # 'JDTDB' begins the vectors columns; 'Date' begins the observer columns
-
-
     try:
         # load JSON and extract result section
         jpl_result = json.loads(jpl_response)['result']
@@ -96,12 +95,13 @@ def clean_up_vectors_series(pattern: str, series: Array) -> pd.Series:
     regularize units, format text, and parse dates in a VECTORS table column
     """
     # convert km to m
-    if pattern in (r"X", r"Y", r"Z", r"VX", r"VY", r"VZ", r"RG", r"RR"):
+    if pattern in ("X", "Y", "Z", "VX", "VY", "VZ", "RG", "RR", "LT"):
         return pd.Series(series.astype(np.float64) * 1000)
     # parse ISO dates
     if pattern == r"Calendar":
         # they put AD/BC on these
         return pd.Series([dtp.parse(instant[5:]) for instant in series])
+    warnings.warn(f"unhandled VECTORS column {pattern}")
 
 
 def clean_up_observer_series(
@@ -115,29 +115,24 @@ def clean_up_observer_series(
             series,
             format=convert_horizons_date_spec_to_strftime(series.name)
         )
-    if pattern.startswith(
-        ("R.A.", "DEC", "Azi", "Elev", "RA", "NP", "Obs", "T-O-M")
-    ):
-        if isinstance(series.iloc[0], str):
-            # "n. a." values for locations that this quantity is not
-            # meaningful or calculable for
-            if "n." in series.iloc[0]:
-                return
-        try:
-            return series.astype(np.float64)
-        except ValueError:
-            # generally random spaces added after a minus sign
-            return series.str.replace(" ", "").astype(np.float64)
     if pattern == "delta":
         return pd.Series(
             [AU_TO_M * delta for delta in series.astype(np.float64)]
         )
     if pattern == "Ang-diam":
-        # convert from arcseconds to degree
+        # convert from arcseconds to degrees
         return series.astype(np.float64) / 3600
-    # only present for ephemerides with planetographic coords specified
-    if pattern in ["geo_lat", "geo_lon", "geo_el"]:
+    # generic behavior
+    if isinstance(series.iloc[0], str):
+        # "n. a." values for locations that this quantity is not
+        # meaningful or calculable wrt this query
+        if "n." in series.iloc[0]:
+            return
+    try:
         return series.astype(np.float64)
+    except ValueError:
+        # generally random spaces added after a minus sign
+        return series.str.replace(" ", "").astype(np.float64)
 
 
 def clean_up_series(query_type: str, pattern: str, series: Array) -> pd.Series:
@@ -162,8 +157,7 @@ def polish_lhorizon_dataframe(
     # we have to use regex here because sometimes Horizons adds extra
     # underscores for visual spacing, using what appears to be a pretty
     # complicated decision tree
-    patterns = TABLE_PATTERNS[query_type]
-    for pattern in patterns.keys():
+    for pattern, repl in TABLE_PATTERNS[query_type].items():
         matches = [
             col for col in horizon_frame.columns if re.match(pattern, col)
         ]
@@ -173,9 +167,8 @@ def polish_lhorizon_dataframe(
         # multiple matches? better fix something
         assert len(matches) == 1
         series = horizon_frame[matches[0]]
-        output_name = patterns[pattern]
         cleaned_result = clean_up_series(query_type, pattern, series)
         if cleaned_result is None:
             continue
-        horizon_columns[output_name] = cleaned_result
+        horizon_columns[repl] = cleaned_result
     return pd.DataFrame(horizon_columns)

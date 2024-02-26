@@ -3,7 +3,7 @@ import os
 import spiceypy as spice
 
 
-def load_metakernel():
+def load_metakernel(fn='lhorizon_metakernel.tm'):
     """
     convenience wrapper for `spiceypy.furnsh()` and thus SPICE `FURNSH`.
     it's impossible to accurately 'target' paths in a flexible way inside a
@@ -11,7 +11,7 @@ def load_metakernel():
     """
     cwd = os.getcwd()
     os.chdir(os.path.dirname(__file__))
-    spice.furnsh("lhorizon_metakernel.tm")
+    spice.furnsh(fn)
     os.chdir(cwd)
 
 

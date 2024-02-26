@@ -37,7 +37,7 @@ CASES_TO_USE = (
     "CYDONIA_PALM_SPRINGS_1959_TOPO",
 )
 cases = {case: TEST_CASES[case] for case in CASES_TO_USE}
-test_parameters = product(cases.keys(), ("OBSERVER", "VECTORS"))
+test_parameters = product(cases.keys(), ("OBSERVER", "VECTORS",))
 
 
 @pytest.mark.parametrize("case_name,query_type", test_parameters)
