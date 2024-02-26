@@ -65,7 +65,7 @@ the following packages are required for usage / installation:
 * `numpy`
 * `pandas`
 * `requests`
-* `pip`
+* `pyerfa`
 
 the following dependencies are optional and could potentially be omitted in restrictive install environments: 
 * `jupyter` is only required to run examples
@@ -79,7 +79,7 @@ to dial out to the jpl.nasa.gov domain.
 Counting dependencies and a base miniconda environment,`lhorizon` takes up about 2.6 GB of space. The respository itself
 is ~75 MB, almost all of which could be pruned in a restrictive install environment that did not require full `git` 
 history and the included SPICE kernels. Many uses of `lhorizon` are not resource-intensive and will run comfortably on 
-a small machine like an AWS EC2 t3.micro instance. Conversely, resource requirements can scale as high as you like if 
+a small machine like an AWS EC2 t3a.micro instance. Conversely, resource requirements can scale as high as you like if 
 you are planning to process extremely large sets of geometry data.
 
 ## usage
@@ -121,8 +121,16 @@ running them can be found in [benchmarks/readme.md](benchmarks/readme.md)
   * handling for Horizons API changes
   * compatibility fixes for Python 3.12 and other library releases
   * updated test data for parity with newly-released ephemerides
-
-
+* 2023-02-26: 1.1.4 release.
+  * changed some default quantities and updated data accordingly
+  * handled a variety of edge cases related to timespans and column name 
+  formatting
+  * Exceptions raised in response to parsing failures now attempt to include
+  any relevant failure message from the API response
+  * query options can now be passed as varkwargs to the `LHorizon` 
+  constructor
+  * `lhorizon.constants.HORIZONS_QUANTITY_NAMES` provides a quick reference
+  to Horizons quantity codes
 
 ## cautions / known issues
 

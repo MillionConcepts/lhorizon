@@ -47,7 +47,7 @@ def make_lhorizon_dataframe(
         columns = re.search(
             HORIZON_COLUMN_SEARCH, jpl_result
         )[0].replace(" ", "")
-    except TypeError:
+    except (TypeError, AttributeError):
         if data is not None:
             raise HorizonsReturnedError(data)
         raise ValueError(

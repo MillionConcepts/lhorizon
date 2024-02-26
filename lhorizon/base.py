@@ -5,7 +5,7 @@ solar system ephemerides service.
 """
 
 from collections.abc import Mapping, MutableMapping, Sequence
-from typing import Union, Optional
+from typing import Union, Optional, Sequence
 import warnings
 
 import pandas as pd
@@ -110,10 +110,15 @@ class LHorizon:
     "J2000", Earth mean equator and equinox of January 1 2000,
     closely aligned with ICRF and equivalent to SPICE "J2000'. Can also be
     "B1950", FK5 / Earth mean equator of 1950.
-    * `quantities: str` Horizons quantity codes, expressed as a
-    comma-separated string. defaults for each query type
-    can be set in `lhorizon.config`. See JPL documentation for a full list of
-    code. "A" will return all available quantities.
+    * `quantities: Union[str, Sequence[int], int]` HORIZONS quantity code. For
+    OBSERVER queries, this represents a mix-and-match selection of columns, and
+    so `quantities` may be expressed either as a string of comma-separated
+    integers or a `Sequence` of `int`; alternatively, the special value "A"
+    means "all available quantities". For VECTORS queries, this represents
+    one of six formats, and should be a single integer (as either `str` or
+    `int`). Defaults for each query type can be set in `lhorizon.config`. See
+    `lhorizon.constants.QUANTITY_NAMES` for quantity number/type/title
+    mappings; refer to JPL documentation for a complete description.
     * `extra_precision: bool=False`: return full available precision for
     RA/Dec values in OBSERVER tables
     * `rise_transit_set: bool = False`: return only times at target rise,
@@ -125,6 +130,9 @@ class LHorizon:
     in str rather than Timestamp. By default, this will raise a OOBTimeWarning.
     This is annoying if you expect to be dealing with times well in the past
     or future, so you can pass ignore_oob_time=True to suppress it.
+    #### **kwoptions
+    Varkwarg alternative to passing `query_options` as a mapping. Varkwargs
+    override keys in `query_options`.
 
     ### attributes
 
@@ -154,7 +162,8 @@ class LHorizon:
         query_type: str = "OBSERVER",
         allow_long_queries: bool = False,
         query_options: Optional[Mapping] = None,
-        ignore_oob_time: bool = False
+        ignore_oob_time: bool = False,
+        **kwoptions
     ):
         if isinstance(target, MutableMapping):
             target = self._prep_geodetic_location(target)
@@ -175,9 +184,8 @@ class LHorizon:
         self.response = None
         self.request = None
         self.allow_long_queries = allow_long_queries
-        if query_options is None:
-            query_options = {}
-        self.query_options = query_options
+        query_options = {} if query_options is None else query_options
+        self.query_options = query_options | kwoptions
         self.prepare_request()
 
     def dataframe(self) -> pd.DataFrame:
@@ -282,6 +290,14 @@ class LHorizon:
         )
         if quantities is None:
             quantities = getattr(config, self.query_type + "_QUANTITIES")
+        elif isinstance(quantities, (list, tuple)):
+            quantities = ",".join(map(str, quantities))
+        elif isinstance(quantities, int):
+            quantities = str(quantities)
+        elif self.query_type == "VECTORS" and "," in quantities:
+            raise TypeError(
+                "Cannot accept a sequence of quantities for VECTORS queries."
+            )
         params = assemble_request_params(
             command,
             self.query_type,
