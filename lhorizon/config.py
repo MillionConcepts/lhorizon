@@ -24,6 +24,13 @@ DEFAULT_HEADERS = {
     "Connection": "keep-alive"
 }
 
+VISIBILITY_FLAG_NAMES = (
+    'solar_presence',
+    'interference_flag',
+    'nearside_flag',
+    'illumination_flag'
+)
+
 TABLE_PATTERNS = {
     "VECTORS": {
         r"Calendar": "time_tdb",
@@ -69,12 +76,6 @@ TABLE_PATTERNS = {
         "geo_lat": "geo_lat",
         "geo_lon": "geo_lon",
         "geo_el": "geo_el",
-    },
+    } | {f: f for f in VISIBILITY_FLAG_NAMES},
 }
 
-VISIBILITY_FLAG_NAMES = (
-    'solar_presence',
-    'interference_flag',
-    'nearside_flag',
-    'illumination_flag'
-)

@@ -121,6 +121,8 @@ def clean_up_observer_series(
     """
     regularize units, format text, and parse dates in an OBSERVER table column
     """
+    if pattern in VISIBILITY_FLAG_NAMES:
+        return series
     if pattern == r"Date_+\(UT\)":
         try:
             return pd.to_datetime(
