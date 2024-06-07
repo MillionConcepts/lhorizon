@@ -10,9 +10,11 @@ def load_metakernel(fn='lhorizon_metakernel.tm'):
     SPICE metakernel; this sweeps directory structure messiness under the rug.
     """
     cwd = os.getcwd()
-    os.chdir(os.path.dirname(__file__))
-    spice.furnsh(fn)
-    os.chdir(cwd)
+    try:
+        os.chdir(os.path.dirname(__file__))
+        spice.furnsh(fn)
+    finally:
+        os.chdir(cwd)
 
 
 # TODO: or we could write an extended furnsh() replacement that dynamically
