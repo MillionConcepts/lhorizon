@@ -1,7 +1,6 @@
 name: lh-bench
 channels:
   - conda-forge
-  - defaults
 dependencies:
   - astroquery
   - jupyter

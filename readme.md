@@ -8,12 +8,15 @@
 
 ### purpose
 
-`lhorizon` helps you find things in the Solar System. It is built around a thick Python wrapper for the 
-Jet Propulsion Laboratory (JPL) [Horizons](https://ssd.jpl.nasa.gov/?horizons) service. _Horizons_, provided by JPL's
-Solar System Dynamics Group (SSD), is one of the only sources in the world that offers no-assembly-required 
-high-precision data on the relative positions and velocities of almost every known body in the Solar System. 
-`lhorizon` offers tools to query _Horizons_ for data, parse its responses into useful Python objects, and smoothly 
-incorporate them into bulk calculation and transformation workflows.
+`lhorizon` helps you find things in the Solar System. It is built around a thick 
+Python wrapper for the Jet Propulsion Laboratory (JPL) [Horizons](https://ssd.jpl.nasa.gov/?horizons) service,
+supplemented by some uses of the SPICE toolkit. _Horizons_, provided by JPL's 
+Solar System Dynamics Group (SSD), is one of the only sources in the world that 
+offers no-assembly-required high-precision data on the relative positions and 
+velocities of almost every known body in the Solar System. `lhorizon` offers 
+tools to query _Horizons_ for data, parse its responses into useful Python 
+objects, and smoothly incorporate them into bulk calculation and transformation 
+workflows.
 
 If you would a quick overview of major package functionality, 
 [you can try these example Notebooks on Binder.](https://mybinder.org/v2/gh/MillionConcepts/lhorizon/main?filepath=examples)
@@ -21,44 +24,55 @@ If you would a quick overview of major package functionality,
 ### origin
 
 `lhorizon` began as a fork of [astroquery.jplhorizons](https://github.com/astropy/astroquery/tree/master/astroquery/jplhorizons) 
-(originally written by Michael Mommert around 2016). We wrote it in order to circumvent a bug introduced to `jplhorizons` by 
-serverside changes at JPL that prevented it from correctly parsing queries involving target or observer locations given 
-in planetodetic coordinates, and more specifically to provide suppport for queries related to arbitrary locations on 
-the lunar surface. In the process, we extended it to implement a more efficient parser, add support for fast queries in 
-bulk, and remove the use of `astroquery` and `astropy` features (for both performance and API compatibility reasons). 
-At some point, we realized that a fast, standalone interface to Horizons might be useful to the community at large and 
-decided to polish it into a general-use package.
+(originally written by Michael Mommert around 2016). We wrote it in order to 
+circumvent a bug (since fixed) introduced to `jplhorizons` by serverside changes at JPL that 
+prevented it from correctly parsing queries involving target or observer locations given 
+in planetodetic coordinates, and more specifically to provide suppport for queries 
+related to arbitrary locations on the lunar surface. In the process, we extended 
+it to implement a more efficient parser, add support for fast queries in bulk, and 
+remove the use of `astroquery` and `astropy` features (for both performance and 
+API compatibility reasons). At some point, we realized that a fast, standalone 
+interface to Horizons might be useful to the community at large and decided to 
+polish it into a general-use package.
 
 ### pronunciation
 
-along the lines of "l'horizon" or "low-ree-zahn;" like "the horizon" in French, or the famous Palm Springs Desert 
-Modern hotel (an easy drive from Pasadena).
+along the lines of "l'horizon" or "low-ree-zahn;" like "the horizon" in French, 
+or the famous Palm Springs Desert Modern hotel (an easy drive from Pasadena).
 
 ## installation
 
 ### automated
 
-`lhorizon` is available on `conda-forge`, and we recommend installing it using the `conda` package manager: 
-`conda install -c conda-forge lhorizon`.
+`lhorizon` is available on `conda-forge`, and we recommend installing it using 
+the `conda` package manager: `conda install -c conda-forge lhorizon`.
 
-We do not test or officially support the use of non-`conda` environments for `lhorizon`, but it can also be installed from PyPi: 
-`pip install lhorizon`, or, if you'd like all the bells and whistles, `pip install lhorizon[target, examples, tests]`.
+We do not test or officially support the use of non-`conda` environments for 
+`lhorizon`, but it can also be installed from PyPi: `pip install lhorizon`, 
+or, if you'd like all the bells and whistles, `pip install lhorizon[target, examples, tests]`.
 
 ### manual
 
-If you'd like to install `lhorizon` by hand, we again recommend that you use `conda` to assemble a Python environment.
+If you'd like to install `lhorizon` by hand, we again recommend that you use 
+`conda` to assemble a Python environment.
 
-If you're already equipped with `conda`, you can create an environment (named "lhorizon") for this package by cloning this repository
-and running: `conda env create -f environment.yml` from the repository root directory. 
-(You could instead add its dependencies to an existing environment by running `conda env update -n existing_env -f environment.yml`). 
-Then, if you'd like`lhorizon` installed as a site package in this environment, activate the environment and run `pip install -e .`. 
+If you're already equipped with `conda`, you can create an environment (named 
+"lhorizon") for this package by cloning this repository and running: `conda 
+env create -f environment.yml` from the repository root directory. (You could 
+instead add its dependencies to an existing environment by running `conda env 
+update -n existing_env -f environment.yml`). Then, if you'd like`lhorizon` 
+installed as a site package in this environment, activate the environment and run 
+`pip install -e .`. 
 
-If you're new to `conda` or Python environment management in general, please take a look at our easy 
-[conda installation guide](docs/conda_installation_guide.md). 
+If you're new to `conda` or Python environment management in general, please 
+take a look at our easy [conda installation guide](docs/conda_installation_guide.md). 
  
 ### dependencies and requirements
 
-`lhorizon` requires Python >= 3.9 (there are no plans to implement support for older Python versions).
+`lhorizon` requires Python >= 3.11 (there are no plans to implement support 
+for older Python versions). A handful of feactures that rely on Horizons 
+capabilities only available through Telnet will not function on Python 3.13;
+finding a replacement for deprecated PSL Telnet functionality is planned.
 
 the following packages are required for usage / installation:
 * `more-itertools`
@@ -67,20 +81,23 @@ the following packages are required for usage / installation:
 * `requests`
 * `pyerfa`
 
-the following dependencies are optional and could potentially be omitted in restrictive install environments: 
+the following dependencies are optional and could potentially be omitted in 
+restrictive install environments: 
 * `jupyter` is only required to run examples
 * `pytest`, `pytest-cov`, and `pytest-mock` are only required to run tests
 * `spiceypy` and `sympy` are only required for `lhorizon.target` and related tests and examples
 
-Some features of `lhorizon` can be used without internet connectivity, but much of the library requires you to be able
-to dial out to the jpl.nasa.gov domain.
+Some features of `lhorizon` can be used without internet connectivity, but much of 
+the library requires you to be able to dial out to the jpl.nasa.gov domain.
 
-`lhorizon` should function in any OS supported by `conda`. The baseline system requirements are fairly light. 
-Counting dependencies and a base miniconda environment,`lhorizon` takes up about 2.6 GB of space. The respository itself
-is ~75 MB, almost all of which could be pruned in a restrictive install environment that did not require full `git` 
-history and the included SPICE kernels. Many uses of `lhorizon` are not resource-intensive and will run comfortably on 
-a small machine like an AWS EC2 t3a.micro instance. Conversely, resource requirements can scale as high as you like if 
-you are planning to process extremely large sets of geometry data.
+`lhorizon` should function in any OS supported by `conda`. The baseline system 
+requirements are fairly light. Counting dependencies and a base miniconda 
+environment,`lhorizon` takes up about 2.6 GB of space. The respository itself is 
+~75 MB, almost all of which could be pruned in a restrictive install environment 
+that did not require full `git` history and the included SPICE kernels. Many uses 
+of `lhorizon` are not resource-intensive and will run comfortably on a small machine 
+like an AWS EC2 t3a.micro instance. Conversely, resource requirements can scale as 
+high as you like if you are planning to process extremely large sets of geometry data.
 
 ## usage
 
@@ -99,6 +116,38 @@ running them can be found in [benchmarks/readme.md](benchmarks/readme.md)
 
 ## changelog
 
+* 2024-09-26
+  * updates for ephemerides changes
+  * updates to CI
+  * fixed environment issue with SPICE kernel loading
+* 2024-04-24:
+  * visibility flags now available in LHorizon.table() 
+  * dependency updates
+* 2024-02-26:
+  * assorted QoL improvements
+  * improved display of API errors
+  * handling for ass't OOB times including BCE dates
+  * updates for new ephemerides
+* 2023-12-16:
+  * improved table design
+  * updates to test for new ephemerides versions
+  * fixed a number of edge cases
+* 2023-07-12:
+  * time conversion improvements and optimizations
+  * updates to tests for new ephemerides
+  * various fixes for upstream changes
+  * optimizations for frame-of-reference transformations
+* 2022-12-10:
+  * package now uses new Horizons API endpoint
+  * type hint compatibility fixes
+* 2021-09-13:
+  * added assorted CI workflows
+  * improved interface for concatenated tables
+  * added nbviewer / binder hooks
+  * improved test coverage
+  * improved user-facing and in-code documentation
+  * fixed some edge cases in targeter
+  * added functionality to retrieve observer quantity codes
 * 2021-06-21: Full 1.0.0 release. Extensive changes from older versions:
   * completes and rationalizes interface 
   * concatenates and standardizes target submodule
