@@ -14,7 +14,7 @@ from lhorizon import LHorizon
 from lhorizon.lhorizon_utils import utc_to_jd
 from lhorizon.tests.data.test_cases import TEST_CASES
 from lhorizon.tests.utilz import (
-    make_mock_query_from_test_case, assert_numeric_closeness
+    check_numeric_closeness, make_mock_query_from_test_case, raise_badness
 )
 
 
@@ -98,4 +98,4 @@ def test_make_table_1(mocker):
     test_lhorizon = LHorizon(**case["init_kwargs"])
     table = test_lhorizon.table()
     saved_table = pd.read_csv(case["data_path"] + "_OBSERVER_table.csv")
-    assert assert_numeric_closeness(table, saved_table)
+    raise_badness(check_numeric_closeness(table, saved_table))
