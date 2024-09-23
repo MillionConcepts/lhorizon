@@ -42,7 +42,8 @@ def test_prepare_request_2():
     test_lh = LHorizon(**case["init_kwargs"])
     test_lh.prepare_request()
     assert test_lh.request.url.startswith(case["request_url"])
-    assert round(utc_to_jd(dt.datetime.utcnow()), 4) == round(
+    assert round(
+        utc_to_jd(dt.datetime.now(dt.UTC).replace(tzinfo=None)), 4) == round(
         float(re.search(r"TLIST=([\d.]+)", test_lh.request.url).group(1)), 4
     )
 

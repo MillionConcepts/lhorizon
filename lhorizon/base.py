@@ -368,7 +368,7 @@ class LHorizon:
         """
         if epochs is None:
             import datetime as dt
-            return utc_to_jd(dt.datetime.utcnow())
+            return utc_to_jd(dt.datetime.now(dt.UTC).replace(tzinfo=None))
         if isinstance(epochs, Mapping):
             if not (
                 "start" in epochs and "stop" in epochs and "step" in epochs
