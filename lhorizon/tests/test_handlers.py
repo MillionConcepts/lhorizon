@@ -16,7 +16,9 @@ from lhorizon.handlers import (
     list_majorbodies, get_observer_quantity_codes,
 )
 from lhorizon.tests.data.test_cases import TEST_CASES
-from lhorizon.tests.utilz import numeric_closeness, make_mock_failing_query
+from lhorizon.tests.utilz import (
+    check_numeric_closeness, make_mock_failing_query, raise_badness
+)
 
 CASES_TO_USE = [
     "MARS_SUN_ANGLE_MINIMAL",
@@ -37,11 +39,10 @@ def test_bulk_retrieval(case_name):
     lhorizons = construct_lhorizon_list(**case["init_kwargs"])
     assert len(lhorizons) == case["lhorizon_count"]
     query_all_lhorizons(lhorizons)
-    test_table = pd.concat([lhorizon.table() for lhorizon in lhorizons])[
-        case["use_columns"]
-    ]
+    test_table = pd.concat([lhorizon.table() for lhorizon in lhorizons])
+    test_table = test_table[case["use_columns"]].reset_index(drop=True)
     ref_table = pd.read_csv(case["data_path"] + ".csv")
-    assert numeric_closeness(ref_table, test_table)
+    raise_badness(check_numeric_closeness(ref_table, test_table))
 
 
 def test_retry_request_behavior(mocker):

@@ -74,6 +74,19 @@ def make_mock_query_from_test_case(test_case, query_type_suffix="OBSERVER"):
     return mock_query
 
 
+def raise_badness(bad_table, bad_df=None):
+    bad_table_str = ", ".join(f"{k}: (max {v})" for k, v in bad_table.items())
+    if bad_df is not None:
+        bad_df_str = ", ".join(f"{k}: (max {v})" for k, v in bad_df.items())
+    else:
+        bad_df_str = ""
+    if len(bad_df_str) + len(bad_table_str) > 0:
+        errstring = f"value mismatches. table: {bad_table_str}."
+        if bad_df is not None:
+            errstring += f"df: {bad_df_str}."
+        raise ValueError(errstring)
+
+
 def check_against_reference(case, query_type, test_df, test_table):
     """
     skeleton test function for comparing the output of a response parser with
@@ -90,15 +103,18 @@ def check_against_reference(case, query_type, test_df, test_table):
             inplace=True
         )
     assert set(ref_df.columns.values) == set(test_df.columns.values)
-    assert numeric_closeness(ref_df, test_df)
-    assert numeric_closeness(ref_table, test_table)
+    bad_df = check_numeric_closeness(ref_df, test_df)
+    bad_table = check_numeric_closeness(ref_table, test_table)
+    raise_badness(bad_table, bad_df)
 
 
-def numeric_closeness(ref_table, test_table):
-    return np.allclose(
-        test_table[numeric_columns(test_table)],
-        ref_table[numeric_columns(ref_table)],
-    )
+def check_numeric_closeness(ref_table, test_table, round_to=6):
+    bad = {}
+    for c in numeric_columns(test_table):
+        if np.allclose(test_table[c], ref_table[c]):
+            continue
+        bad[c] = round(max(abs(test_table[c] - ref_table[c])), round_to)
+    return bad
 
 
 def make_sure_this_fails(
