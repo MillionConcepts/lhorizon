@@ -2,9 +2,9 @@ name: ubuntu minimal env tests
 
 on:
   push:
-    branches: "main"
+    branches: ["main"]
   pull_request:
-    branches: "*"
+    branches: ["main"]
   schedule:
     - cron: "0 13 * * 1"
 
@@ -19,13 +19,14 @@ jobs:
         python-version: ["3.11", "3.12"]
         environment-file: [".minimal-environment.yml"]
     steps:
-      - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: actions/checkout@v4
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           environment-file: ${{ matrix.environment-file }}
           activate-environment: lhorizon
-          auto-update-conda: false
+          auto-update-conda: true
           python-version: ${{ matrix.python-version }}
+          auto-activate-base: false
 
       - name: Set up conda environment
         shell: bash -l {0}
