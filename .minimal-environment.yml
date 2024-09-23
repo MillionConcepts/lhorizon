@@ -3,8 +3,8 @@ channels:
   - conda-forge
 dependencies:
   - more-itertools
-  - numpy>=1.2.2
-  - python=3.11
+  - numpy
+  - python>=3.11
   - pandas
   - pyerfa
   - pytest
