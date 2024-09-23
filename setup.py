@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 long_description = "lhorizon helps you find things in the Solar System. It is built around a thick Python wrapper for the Jet Propulsion Laboratory (JPL) Horizons service. Horizons, provided by JPL's Solar System Dynamics Group (SSD), is one of the only sources in the world that offers no-assembly-required high-precision data on the relative positions and velocities of almost every known body in the Solar System. lhorizon offers tools to query Horizons for data, parse its responses into useful Python objects, and smoothly incorporate them into bulk calculation and transformation workflows."
 setup(
     name="lhorizon",
-    version="1.1.6",
+    version="1.1.7",
     description="lhorizon helps you find things in the solar system",
     long_description=long_description,
     url="https://github.com/millionconcepts/lhorizon.git",
