@@ -7,7 +7,7 @@ earth_latest_high_prec.bpc		Earth binary PCK
 moon_080317.tf					Lunar FK
 moon_pa_de421_1900-2050.bpc		Moon binary PCK
 naif0012.tls                	Generic LSK
-pck00010.tpc					generic NAIF kernel
+pck00011.tpc					generic body orientation kernel
 
 \begindata
 
@@ -17,7 +17,7 @@ KERNELS_TO_LOAD = (
     'de440s.bsp'
     'earth_latest_high_prec.bpc'
     'moon_pa_de421_1900-2050.bpc'
-    'pck00010.tpc'
+    'pck00011.tpc'
 )
 
 \begintext

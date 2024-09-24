@@ -116,10 +116,11 @@ running them can be found in [benchmarks/readme.md](benchmarks/readme.md)
 
 ## changelog
 
-* 2024-09-26
-  * updates for ephemerides changes
+* 2024-09-25
+  * updates to tests for ephemerides changes
   * updates to CI
   * fixed environment issue with SPICE kernel loading
+  * updated packaged versions of several SPICE kernels
 * 2024-04-24:
   * visibility flags now available in LHorizon.table() 
   * dependency updates
