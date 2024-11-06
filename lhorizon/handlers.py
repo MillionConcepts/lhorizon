@@ -172,6 +172,15 @@ def query_all_lhorizons(
             time.sleep(delay_between)
 
 
+def _format_site_id(obj):
+    if isinstance(obj, float) and np.isnan(obj):
+        return None
+    try:
+        return int(obj)
+    except (ValueError, TypeError):
+        return obj
+
+
 def list_sites(center_body: int = 399) -> pd.DataFrame:
     """
     query _Horizons_ for all named sites recognized on the specified body and
@@ -197,7 +206,10 @@ def list_sites(center_body: int = 399) -> pd.DataFrame:
         if "." in str(split[0]):
             split = [np.nan] + re.split(" +", line.strip(), maxsplit=4)
         data_values.append(split)
-    return pd.DataFrame(data_values, columns=columns)
+    df = pd.DataFrame(data_values, columns=columns)
+    df = df.rename(columns={'code_subc': 'id', 'Site name': 'name'})
+    df['id'] = df['id'].map(_format_site_id)
+    return df
 
 
 def list_majorbodies() -> pd.DataFrame:
@@ -217,7 +229,9 @@ def list_majorbodies() -> pd.DataFrame:
         strip = re.sub(" +", " ", line.strip())
         split = re.split(" +", strip, maxsplit=1)
         data_values.append(split)
-    return pd.DataFrame(data_values, columns=["id", "name"]).dropna(axis=0)
+    df = pd.DataFrame(data_values, columns=["id", "name"]).dropna(axis=0)
+    df['id'] = df['id'].astype(int)
+    return df
 
 
 def get_observer_quantity_codes() -> str:
