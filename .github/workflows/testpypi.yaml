@@ -13,7 +13,7 @@ jobs:
           activate-environment: lhorizon
           auto-update-conda: false
           python-version: 3.11
-          channel-priority: strict
+          miniforge-version: latest
       - name: Set up conda environment
         shell: bash -l {0}
         run: |
