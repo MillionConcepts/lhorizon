@@ -210,5 +210,15 @@ of Lunar Heat Flow From Earth Based Radio Astronomy" (PI Matthew Siegler).
 
 ## licensing
 
-You can do almost anything with this software that you like, subject only to the extremely permissive terms of the [BSD 
-3-Clause License](LICENSE).
+You can do almost anything with this software that you like, subject only to the 
+extremely permissive terms of the BSD 3-Clause License.
+
+lhorizon/vendor/telnetlib.py is a near copy of the python 3.12.7 `telnetlib` module
+(vendored because it was deprecated in Python 3.13) and additionally carries the 
+PSF License Agreement.
+
+The SPICE kernel files in lhorizon/kernels/ (other than lhorizon_metakernel.tm)
+were created by [NAIF](https://naif.jpl.nasa.gov/naif/pds.html) and are in the
+public domain.
+
+Complete license text is available [in this file](LICENSE).

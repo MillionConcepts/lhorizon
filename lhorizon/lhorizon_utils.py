@@ -1,10 +1,8 @@
-import datetime as dt
-import re
 from collections.abc import Callable, Iterable, Sequence
 from functools import reduce, partial, wraps
 from itertools import starmap
 from operator import or_, and_, contains
-from telnetlib import Telnet
+import re
 from typing import Any, Optional, Pattern, Union, Iterator
 
 import numpy as np
@@ -12,11 +10,11 @@ import pandas as pd
 import pandas.api.types
 import requests
 from erfa import cal2jd, taitt, utctai, dtdb
-from numpy.linalg import norm
 
 from lhorizon import config as config
 from lhorizon._type_aliases import Array
 from lhorizon.constants import J2000_TDB
+from lhorizon.vendor.telnetlib import Telnet
 
 
 def listify(thing: Any) -> list:
