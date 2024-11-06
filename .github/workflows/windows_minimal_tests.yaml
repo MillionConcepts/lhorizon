@@ -28,7 +28,7 @@ jobs:
           channels: conda-forge
           python-version: ${{ matrix.python-version }}
           auto-activate-base: false
-
+          channel-priority: strict
       - name: Set up conda environment
         shell: bash -l {0}
         run: |

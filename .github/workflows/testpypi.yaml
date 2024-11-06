@@ -7,12 +7,13 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           environment-file: environment.yml
           activate-environment: lhorizon
           auto-update-conda: false
           python-version: 3.11
+          channel-priority: strict
       - name: Set up conda environment
         shell: bash -l {0}
         run: |

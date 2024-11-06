@@ -12,13 +12,14 @@ jobs:
         python-version: ["3.11", "3.13"]
         environment-file: ["lhorizon/tests/.doc-environment.yml"]
     steps:
-      - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: actions/checkout@v4
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           environment-file: ${{ matrix.environment-file }}
           activate-environment: lh-docs
           auto-update-conda: false
           python-version: ${{ matrix.python-version }}
+          channel-priority: strict
 
       - name: Set up conda environment
         shell: bash -l {0}
