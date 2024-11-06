@@ -29,6 +29,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           auto-activate-base: false
           miniforge-version: latest
+          conda-remove-defaults: "true"
 
       - name: Set up conda environment
         shell: bash -l {0}
