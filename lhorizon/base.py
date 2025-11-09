@@ -6,10 +6,10 @@ solar system ephemerides service.
 
 from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Union, Optional, Sequence
+import requests
 import warnings
 
 import pandas as pd
-import requests
 
 import lhorizon.config as config
 from lhorizon._response_parsers import (
@@ -368,7 +368,10 @@ class LHorizon:
         """
         if epochs is None:
             import datetime as dt
+
             return utc_to_jd(dt.datetime.now(dt.UTC).replace(tzinfo=None))
+        if isinstance(epochs, (int, float)):  # Horizons will assume JD, great
+            return epochs
         if isinstance(epochs, Mapping):
             if not (
                 "start" in epochs and "stop" in epochs and "step" in epochs
@@ -377,8 +380,20 @@ class LHorizon:
                     "time range ({:s}) requires start, stop, "
                     "and step".format(str(epochs))
                 )
-            return epochs
-        if isinstance(epochs, (int, float)):
+            # now, this _isn't_ ok for julian day number: horizons hates that.
+            # so:
+            for key in ('start', 'stop'):
+                if isinstance((t := epochs[key]), (int, float)):
+                    from erfa import jd2cal
+
+                    epochs = dict(epochs).copy()
+                    y, M, d, fd = jd2cal(t, 0)
+                    fd_h = fd * 24
+                    h = round(fd_h)
+                    fd_m = (fd_h - h) * 60
+                    m = round(fd_m)
+                    s = (fd_m - m) * 60
+                    epochs[key] = f"{y}-{M}-{d}T{h}:{m}:{s}Z"
             return epochs
         if "__iter__" in dir(epochs):
             if isinstance(next(iter(epochs)), (int, float)):

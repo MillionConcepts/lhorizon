@@ -168,10 +168,17 @@ def clean_up_series(query_type: str, pattern: str, series: Array) -> pd.Series:
     """
     dispatch function for Horizons column cleanup functions
     """
+    if str(series.iloc[0]).strip() == 'n.a.':
+        if not all(series.astype(str).str.strip() == 'n.a.'):
+            raise ValueError(
+                "don't know how to convert this type of partial-NaN series"
+            )
+        return np.full(len(series), np.nan)
     if query_type == "OBSERVER":
         return clean_up_observer_series(pattern, series)
     if query_type == "VECTORS":
         return clean_up_vectors_series(pattern, series)
+    raise ValueError(f"don't know how to handle query type {query_type}")
 
 
 def polish_lhorizon_dataframe(
